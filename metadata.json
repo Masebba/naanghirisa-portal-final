@@ -1,0 +1,8 @@
+{
+  "name": "Naanghirisa Organisation Portal",
+  "description": "A comprehensive community-based organisation platform for managing programs, fundraising, transparency, and donor engagement.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
