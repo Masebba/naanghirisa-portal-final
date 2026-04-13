@@ -246,7 +246,7 @@ const ProfileSettings: React.FC = () => {
                     <input 
                       type="password"
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-slate-900"
-                      placeholder="Leave blank to keep current"
+                      placeholder="New password"
                       value={passwords.new}
                       onChange={e => setPasswords({ ...passwords, new: e.target.value })}
                     />
@@ -256,7 +256,7 @@ const ProfileSettings: React.FC = () => {
                     <input 
                       type="password"
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-slate-900"
-                      placeholder="Repeat new password"
+                      placeholder="Confirm new password"
                       value={passwords.confirm}
                       onChange={e => setPasswords({ ...passwords, confirm: e.target.value })}
                     />

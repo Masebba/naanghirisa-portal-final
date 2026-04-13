@@ -22,16 +22,66 @@ import leader4 from "../assets/images/leaders/leader4.jpeg";
 import leader5 from "../assets/images/leaders/leader5.jpg";
 
 const flashbacks = [
-  { year: 2016, title: "Foundation Conversations", text: "Initial discussions among Butaleja professionals on collective community responsibility.", image: y2016 },
-  { year: 2017, title: "Community Trust Building", text: "Early engagement with local leaders and families to understand real needs.", image: y2017 },
-  { year: 2018, title: "First Organised Activities", text: "Small-scale education and welfare support initiatives launched.", image: y2018 },
-  { year: 2019, title: "Formal Structure", text: "Defined leadership, objectives, and accountability mechanisms.", image: y2019 },
-  { year: 2020, title: "Resilience During Crisis", text: "Sustained support to vulnerable families during challenging times.", image: y2020 },
-  { year: 2021, title: "Program Expansion", text: "Education and welfare programs scaled across multiple communities.", image: y2021 },
-  { year: 2022, title: "Partnership Growth", text: "Collaborations with donors and local stakeholders strengthened impact.", image: y2022 },
-  { year: 2023, title: "Operational Maturity", text: "Improved reporting, governance, and program monitoring.", image: y2023 },
-  { year: 2024, title: "Community Reach", text: "Support extended to more households and schools in Butaleja.", image: y2024 },
-  { year: 2025, title: "Sustained Impact", text: "Serving communities with a stable volunteer base and long-term vision.", image: y2025 },
+  {
+    year: 2016,
+    title: "Foundation Conversations",
+    text: "Initial discussions among Butaleja professionals on collective community responsibility.",
+    image: y2016,
+  },
+  {
+    year: 2017,
+    title: "Community Trust Building",
+    text: "Early engagement with local leaders and families to understand real needs.",
+    image: y2017,
+  },
+  {
+    year: 2018,
+    title: "First Organised Activities",
+    text: "Small-scale education and welfare support initiatives launched.",
+    image: y2018,
+  },
+  {
+    year: 2019,
+    title: "Formal Structure",
+    text: "Defined leadership, objectives, and accountability mechanisms.",
+    image: y2019,
+  },
+  {
+    year: 2020,
+    title: "Resilience During Crisis",
+    text: "Sustained support to vulnerable families during challenging times.",
+    image: y2020,
+  },
+  {
+    year: 2021,
+    title: "Program Expansion",
+    text: "Education and welfare programs scaled across multiple communities.",
+    image: y2021,
+  },
+  {
+    year: 2022,
+    title: "Partnership Growth",
+    text: "Collaborations with donors and local stakeholders strengthened impact.",
+    image: y2022,
+  },
+  {
+    year: 2023,
+    title: "Operational Maturity",
+    text: "Improved reporting, governance, and program monitoring.",
+    image: y2023,
+  },
+  {
+    year: 2024,
+    title: "Community Reach",
+    text: "Support extended to more households and schools in Butaleja.",
+    image: y2024,
+  },
+  {
+    year: 2025,
+    title: "Sustained Impact",
+    text: "Serving communities with a stable volunteer base and long-term vision.",
+    image: y2025,
+  },
 ];
 
 const leaders = [
@@ -56,7 +106,8 @@ const leaders = [
   {
     name: "Mulabi David",
     role: "Finance & Compliance",
-    experience: "Program management, International Development and Public Policy Consultant",
+    experience:
+      "Program management, International Development and Public Policy Consultant",
     image: leader4,
   },
   {
@@ -70,12 +121,11 @@ const leaders = [
 const About: React.FC = () => {
   return (
     <div className="bg-white">
-
       {/* ================= HEADER ================= */}
       <section
         className="py-28 text-center text-white relative"
         style={{
-          backgroundImage: `linear-gradient(rgba(90,0,0,0.85), rgba(90,0,0,0.85)), url(${headerBg})`,
+          backgroundImage: `linear-gradient(hsla(240, 33%, 7%, 0.88), hsla(240, 4%, 11%, 0.83)), url(${headerBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -89,7 +139,6 @@ const About: React.FC = () => {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-20">
-
         {/* ================= STORY & FORMATION ================= */}
         <div className="grid md:grid-cols-2 gap-16 mb-24 items-center">
           <div>
@@ -100,21 +149,28 @@ const About: React.FC = () => {
               What is Naanghirisa
             </h2>
             <p className="text-slate-600 mb-6 leading-relaxed">
-              Naanghirisa is a Nyole word drawn from the Lunyole proverb "Naanghirisa ahira naliweene"
-              (i.e. One by one makes a bundle). This is the philosophy behind Naanghirisa. The implecation behind
-              this philosophy is tha, through the concerted efforts of this organisation and by encouraging eah of
-              them to contribute towards this call, in the end the Talejan can/will be able to contribute to the
-              development of Butaleja. The end results will be a 'bundle-development' of Butaleja.
+              Naanghirisa is a Nyole word drawn from the Lunyole proverb
+              "Naanghirisa ahira naliweene" (i.e. One by one makes a bundle).
+              This is the philosophy behind Naanghirisa. The implecation behind
+              this philosophy is tha, through the concerted efforts of this
+              organisation and by encouraging eah of them to contribute towards
+              this call, in the end the Talejan can/will be able to contribute
+              to the development of Butaleja. The end results will be a
+              'bundle-development' of Butaleja.
             </p>
             <p className="text-slate-600 leading-relaxed">
-              Naanghirisa was founded by mainly Kampala-based people of Butaleja district who started as a
-              Facebook group. After long and wide-ranging discussions, the group was moved by the need to
-              develop their home district and went on to reister an Association as a vehicle for organised
-              development initiatives. The journey startd in 2016 when a group of individuals from Butaleja District
-              in Eastern Uganda came together to try and work towards uplifting the standards of the district
-              residents. Many of them are professional who carry on their businesses outside the district and the
-              country of Uganda. From April 17th, 2016, when the first meeting was held, the organsation was
-              launched on 28th Dec 2016 at Butaleja Technical Institute.
+              Naanghirisa was founded by mainly Kampala-based people of Butaleja
+              district who started as a Facebook group. After long and
+              wide-ranging discussions, the group was moved by the need to
+              develop their home district and went on to reister an Association
+              as a vehicle for organised development initiatives. The journey
+              startd in 2016 when a group of individuals from Butaleja District
+              in Eastern Uganda came together to try and work towards uplifting
+              the standards of the district residents. Many of them are
+              professional who carry on their businesses outside the district
+              and the country of Uganda. From April 17th, 2016, when the first
+              meeting was held, the organsation was launched on 28th Dec 2016 at
+              Butaleja Technical Institute.
             </p>
 
             {/* Mission & Vision */}
@@ -123,7 +179,8 @@ const About: React.FC = () => {
                 <i className="fas fa-bullseye text-2xl text-orange-600 mb-4"></i>
                 <h4 className="font-black mb-2">Our Mission</h4>
                 <p className="text-sm text-slate-600">
-                  To empower vulnerable children and communities through education, health, and sustainable initiatives.
+                  To empower vulnerable children and communities through
+                  education, health, and sustainable initiatives.
                 </p>
               </div>
               <div className="p-6 rounded-2xl bg-slate-50 border">
@@ -145,48 +202,82 @@ const About: React.FC = () => {
 
         {/* Principles & Membership */}
         <div className="grid md:grid-cols-2 gap-12 mb-24">
-          <div className="p-10 rounded-[2.5rem] text-white" style={{ backgroundColor: COLORS.primary }}>
+          <div
+            className="p-10 rounded-[2.5rem] text-white"
+            style={{ backgroundColor: COLORS.primary }}
+          >
             <h3 className="text-2xl font-black mb-6">Core Principles</h3>
             <ul className="space-y-4">
               <li className="flex gap-4">
-                <div className="mt-1" style={{ color: COLORS.secondary }}><i className="fas fa-check-circle"></i></div>
+                <div className="mt-1" style={{ color: COLORS.secondary }}>
+                  <i className="fas fa-check-circle"></i>
+                </div>
                 <div>
                   <h4 className="font-bold">Transparency First</h4>
-                  <p className="text-sm opacity-80 text-red-100">Every donation and expenditure is tracked and reported to our donors.</p>
+                  <p className="text-sm opacity-80 text-red-100">
+                    Every donation and expenditure is tracked and reported to
+                    our donors.
+                  </p>
                 </div>
               </li>
               <li className="flex gap-4">
-                <div className="mt-1" style={{ color: COLORS.secondary }}><i className="fas fa-check-circle"></i></div>
+                <div className="mt-1" style={{ color: COLORS.secondary }}>
+                  <i className="fas fa-check-circle"></i>
+                </div>
                 <div>
                   <h4 className="font-bold">Community Empowerment</h4>
-                  <p className="text-sm opacity-80 text-red-100">We work with local leaders to identify the children most in need.</p>
+                  <p className="text-sm opacity-80 text-red-100">
+                    We work with local leaders to identify the children most in
+                    need.
+                  </p>
                 </div>
               </li>
               <li className="flex gap-4">
-                <div className="mt-1" style={{ color: COLORS.secondary }}><i className="fas fa-check-circle"></i></div>
+                <div className="mt-1" style={{ color: COLORS.secondary }}>
+                  <i className="fas fa-check-circle"></i>
+                </div>
                 <div>
                   <h4 className="font-bold">Compassionate Care</h4>
-                  <p className="text-sm opacity-80 text-red-100">Education is not just fees; it is emotional and physical welfare.</p>
+                  <p className="text-sm opacity-80 text-red-100">
+                    Education is not just fees; it is emotional and physical
+                    welfare.
+                  </p>
                 </div>
               </li>
             </ul>
           </div>
           <div className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100">
-            <h3 className="text-2xl font-black mb-6" style={{ color: COLORS.primary }}>Who Can Join Us?</h3>
+            <h3
+              className="text-2xl font-black mb-6"
+              style={{ color: COLORS.primary }}
+            >
+              Who Can Join Us?
+            </h3>
             <p className="text-slate-600 mb-6 leading-relaxed">
-              Naanghirisa is an open community. We believe in collective action and welcome anyone who shares our vision of a brighter future for the girl child and vulnerable youth.
+              Naanghirisa is an open community. We believe in collective action
+              and welcome anyone who shares our vision of a brighter future for
+              the girl child and vulnerable youth.
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                <i className="fas fa-user-friends" style={{ color: COLORS.secondary }}></i>
+                <i
+                  className="fas fa-user-friends"
+                  style={{ color: COLORS.secondary }}
+                ></i>
                 <span>Volunteers of all backgrounds</span>
               </div>
               <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                <i className="fas fa-hand-holding-heart" style={{ color: COLORS.secondary }}></i>
+                <i
+                  className="fas fa-hand-holding-heart"
+                  style={{ color: COLORS.secondary }}
+                ></i>
                 <span>Individual and Corporate Donors</span>
               </div>
               <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                <i className="fas fa-network-wired" style={{ color: COLORS.secondary }}></i>
+                <i
+                  className="fas fa-network-wired"
+                  style={{ color: COLORS.secondary }}
+                ></i>
                 <span>Community Partners & Organisations</span>
               </div>
             </div>
@@ -196,37 +287,56 @@ const About: React.FC = () => {
         {/* Achievements Section */}
         <div className="mb-10 text-justify">
           <div className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100">
-            <h3 className="text-2xl font-black mb-6" style={{ color: COLORS.primary }}>Butaleja in public domain</h3>
+            <h3
+              className="text-2xl font-black mb-6"
+              style={{ color: COLORS.primary }}
+            >
+              Butaleja in public domain
+            </h3>
             <p className="text-slate-600 mb-6 leading-relaxed">
-              Butaleja district has the unenviable distinction of having the youngest grandmother ever recorded in
-              Uganda aged 27 years. As the same time, school drop-out has increased to 70% in upper primary.
-              These negative indicators are mainly affecting the girls due to factors such as early marriage, where,
-              again, Butaleja is among the most affected districts. Not surprisingly, the district is also struggling
-              with poor academic outcomes, for example in the 2015 primary leaving exams only 59 (1.4%) students scored
-              Grade ‘A’ out of 4,196 students, while 20.6% failed. A UNEB (2015) study found Butaleja among the worst
-              performing districts in educational outcomes: in upper primary only 10.9% of students were literate in
-              English while only 27.5% were numerate.
-
-              In response to this situation, Naanghirisa chose education as one of its priority areas of focus and
-              developed the PASS project (Promoting Academic Success in Schools). The goal of this project is to
-              contribute to the improvement of education standards in Butaleja in general. However, due to the
-              gender-based disadvantages girls face in education, we have special emphasis to support girls to
-              progress in education under the Girl-Child Education Initiative of the PASS Project. In line with this
-              Initiative, we initiated the ‘Prof. Margaret Mungherera Scholarship for Girl-Child Education Excellence’.
-              The main objectives of this scholarship is to ‘…support the education of bright but disadvantaged girls
-              from Butaleja who are, otherwise, unable to progress with studies at two levels: (1) to progress at
-              secondary level; (2) to study medicine or a medical related course at university’.
+              Butaleja district has the unenviable distinction of having the
+              youngest grandmother ever recorded in Uganda aged 27 years. As the
+              same time, school drop-out has increased to 70% in upper primary.
+              These negative indicators are mainly affecting the girls due to
+              factors such as early marriage, where, again, Butaleja is among
+              the most affected districts. Not surprisingly, the district is
+              also struggling with poor academic outcomes, for example in the
+              2015 primary leaving exams only 59 (1.4%) students scored Grade
+              ‘A’ out of 4,196 students, while 20.6% failed. A UNEB (2015) study
+              found Butaleja among the worst performing districts in educational
+              outcomes: in upper primary only 10.9% of students were literate in
+              English while only 27.5% were numerate. In response to this
+              situation, Naanghirisa chose education as one of its priority
+              areas of focus and developed the PASS project (Promoting Academic
+              Success in Schools). The goal of this project is to contribute to
+              the improvement of education standards in Butaleja in general.
+              However, due to the gender-based disadvantages girls face in
+              education, we have special emphasis to support girls to progress
+              in education under the Girl-Child Education Initiative of the PASS
+              Project. In line with this Initiative, we initiated the ‘Prof.
+              Margaret Mungherera Scholarship for Girl-Child Education
+              Excellence’. The main objectives of this scholarship is to
+              ‘…support the education of bright but disadvantaged girls from
+              Butaleja who are, otherwise, unable to progress with studies at
+              two levels: (1) to progress at secondary level; (2) to study
+              medicine or a medical related course at university’.
             </p>
             <p className="text-slate-600 mb-6 leading-relaxed">
-              Poverty, Early marriage, Teenage Oregncaies, Gender Based Violence, HIV and AIDS, and low participation
-              in post-primary education are some of the situations attributed to Butaleja District. Adolescent girls,
-              in particular, face multiple vulnerabilities. Many girls also drop out of school as a result of unwanted
-              teenage pregnancies and ealry marrages. According to the Ministry of Health, 25% of Ugandan teenagers
-              become pregnant by the age of 19. Close to half are married before their 18th birthdays and continue
-              having babies into their mid-40s. Many teenage mothers do not have access to adquate reproductive health
-              care and die while trying to give life. A survey conducted by Butaleja District Health Office in all
-              health centeres revealed that at least 5,265 girls between 10 and 19 years were impregnanted and have
-              dropped out of school in Butaleja District from 2019 to 2020. Of the 5,265 impregnanted girls, only 3,596
+              Poverty, Early marriage, Teenage Oregncaies, Gender Based
+              Violence, HIV and AIDS, and low participation in post-primary
+              education are some of the situations attributed to Butaleja
+              District. Adolescent girls, in particular, face multiple
+              vulnerabilities. Many girls also drop out of school as a result of
+              unwanted teenage pregnancies and ealry marrages. According to the
+              Ministry of Health, 25% of Ugandan teenagers become pregnant by
+              the age of 19. Close to half are married before their 18th
+              birthdays and continue having babies into their mid-40s. Many
+              teenage mothers do not have access to adquate reproductive health
+              care and die while trying to give life. A survey conducted by
+              Butaleja District Health Office in all health centeres revealed
+              that at least 5,265 girls between 10 and 19 years were
+              impregnanted and have dropped out of school in Butaleja District
+              from 2019 to 2020. Of the 5,265 impregnanted girls, only 3,596
               attended antenatal care.
             </p>
           </div>
@@ -235,7 +345,9 @@ const About: React.FC = () => {
         <section className="py-4 w-full bg-white">
           <div className="max-w-5xl mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-red-900 mb-2">Our Journey</h2>
+              <h2 className="text-4xl font-black text-red-900 mb-2">
+                Our Journey
+              </h2>
               <p className="text-slate-500 text-lg">
                 From our foundation in 2016 to today
               </p>
@@ -245,16 +357,18 @@ const About: React.FC = () => {
               <div className="absolute left-6 top-0 bottom-0 w-[3px] bg-orange-200"></div>
               {flashbacks.map((item, index) => (
                 <div key={index} className="relative">
-
                   {/* Timeline dot — perfectly centered on the line */}
-                  <div className="absolute left-[22px] top-1/2 -translate-y-1/2
-                          w-4 h-4 rounded-full bg-orange-500 border-4 border-white z-10" />
+                  <div
+                    className="absolute left-[22px] top-1/2 -translate-y-1/2
+                          w-4 h-4 rounded-full bg-orange-500 border-4 border-white z-10"
+                  />
 
                   {/* Card */}
-                  <div className="ml-12 bg-[#FFF7F1] rounded-xl shadow-xl p-4 overflow-hidden shadow-xl hover:scale-105 transition-all hover:shadow-2xl
-                  ">
+                  <div
+                    className="ml-12 bg-[#FFF7F1] rounded-xl shadow-xl p-4 overflow-hidden shadow-xl hover:scale-105 transition-all hover:shadow-2xl
+                  "
+                  >
                     <div className="grid md:grid-cols-[15%_85%] gap-4 items-center">
-
                       {/* Image */}
                       <div className="w-full">
                         <img
@@ -267,8 +381,10 @@ const About: React.FC = () => {
                       {/* Content */}
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <span className="px-3 py-1 text-xs font-black uppercase rounded-full
-                                   bg-orange-500 text-white tracking-widest">
+                          <span
+                            className="px-3 py-1 text-xs font-black uppercase rounded-full
+                                   bg-orange-500 text-white tracking-widest"
+                          >
                             {item.year}
                           </span>
                           <h4 className="font-black text-lg text-red-900">
@@ -280,7 +396,6 @@ const About: React.FC = () => {
                           {item.text}
                         </p>
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -293,7 +408,9 @@ const About: React.FC = () => {
       {/* ================= LEADERSHIP ================= */}
       <div id="leadership">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-black text-red-900">Leadership & Governance</h2>
+          <h2 className="text-4xl font-black text-red-900">
+            Leadership & Governance
+          </h2>
           <p className="text-slate-500 mt-4 max-w-2xl mx-auto">
             Experienced leadership committed to integrity and impact.
           </p>
@@ -301,24 +418,26 @@ const About: React.FC = () => {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 max-w-7xl mx-auto px-4 mb-20">
           {leaders.map((leader, i) => (
-            <div key={i} className="bg-white text-center p-4 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl hover:bg-[#FFF7F1]">
+            <div
+              key={i}
+              className="bg-white text-center p-4 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl hover:bg-[#FFF7F1]"
+            >
               <img
                 src={leader.image}
                 alt={leader.name}
                 className="w-28 h-28 mx-auto rounded-full object-cover shadow-lg mb-4"
               />
               <h4 className="font-black">{leader.name}</h4>
-              <p className="text-orange-600 text-xs font-bold uppercase">{leader.role}</p>
+              <p className="text-orange-600 text-xs font-bold uppercase">
+                {leader.role}
+              </p>
               <p className="text-slate-600 text-sm mt-2">{leader.experience}</p>
             </div>
           ))}
         </div>
       </div>
-
     </div>
   );
 };
 
 export default About;
-
-

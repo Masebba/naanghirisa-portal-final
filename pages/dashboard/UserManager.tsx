@@ -1,213 +1,263 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getUsers, updateUser, addUser, deleteUser, resetUserPassword } from '../../services/mockData';
-import { User, UserRole } from '../../types';
 import { COLORS } from '../../constants';
+import { User, UserRole } from '../../types';
 
 type FilterType = 'All' | 'Admins' | 'Donors' | 'Volunteers';
 
+type EditingUser = Partial<User> & { password?: string; confirmPassword?: string };
+
+const roles = [
+  { label: 'Super Admin', value: UserRole.SUPER_ADMIN },
+  { label: 'Manager Admin', value: UserRole.MID_ADMIN },
+  { label: 'Staff Admin', value: UserRole.STAFF_ADMIN },
+  { label: 'Donor', value: UserRole.DONOR },
+  { label: 'Volunteer', value: UserRole.VOLUNTEER },
+];
+
 const UserManager: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  const [editingUser, setEditingUser] = useState<EditingUser | null>(null);
   const [filter, setFilter] = useState<FilterType>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     setUsers([...getUsers()]);
   }, []);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u => {
-      const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-      let matchesRole = true;
-      if (filter === 'Admins') {
-        matchesRole = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(u.role);
-      } else if (filter === 'Donors') {
-        matchesRole = u.role === UserRole.DONOR;
-      } else if (filter === 'Volunteers') {
-        matchesRole = u.role === UserRole.VOLUNTEER;
-      }
-
+    return users.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole =
+        filter === 'All'
+          ? true
+          : filter === 'Admins'
+            ? [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(user.role)
+            : filter === 'Donors'
+              ? user.role === UserRole.DONOR
+              : user.role === UserRole.VOLUNTEER;
       return matchesSearch && matchesRole;
     });
   }, [users, filter, searchTerm]);
 
   const handleSave = () => {
-    if (editingUser) {
-      if (editingUser.id) {
-        // Edit existing
-        const updated = editingUser as User;
-        updateUser(updated);
-        setUsers(users.map(u => u.id === updated.id ? updated : u));
-        alert(`Member profile for ${updated.name} updated.`);
-      } else {
-        // Create new
-        const newUser: User = {
-          ...editingUser,
-          id: `u${Date.now()}`,
-          password: 'user123', // Default temporary password
-          avatar: editingUser.avatar || `https://i.pravatar.cc/150?u=${editingUser.email || Date.now()}`,
-          phone: editingUser.phone || '',
-        } as User;
-
-        addUser(newUser);
-        setUsers([...users, newUser]);
-        alert(`User Account Provisioned! \n\nName: ${newUser.name}\nIdentifier: ${newUser.email || newUser.phone}\nTemp Password: user123\n\n[System]: Member can now log in using these credentials.`);
-      }
-      setEditingUser(null);
+    if (!editingUser?.name || !editingUser.email || !editingUser.role) {
+      window.alert('Please complete the name, email, and role fields.');
+      return;
     }
+
+    if (editingUser.id) {
+      const updated: User = {
+        ...editingUser,
+        id: editingUser.id,
+        name: editingUser.name,
+        email: editingUser.email,
+        phone: editingUser.phone || '',
+        role: editingUser.role,
+        avatar: editingUser.avatar,
+        password: editingUser.password,
+      } as User;
+      updateUser(updated);
+      setUsers(prev => prev.map(user => (user.id === updated.id ? updated : user)));
+      window.alert(`Member profile for ${updated.name} updated.`);
+    } else {
+      if (!editingUser.password || editingUser.password.length < 8) {
+        window.alert('Please set a password with at least 8 characters.');
+        return;
+      }
+      const newUser: User = {
+        id: `u_${Date.now()}`,
+        name: editingUser.name,
+        email: editingUser.email,
+        phone: editingUser.phone || '',
+        role: editingUser.role,
+        password: editingUser.password,
+        avatar: editingUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(editingUser.email || editingUser.name || Date.now().toString())}`,
+      } as User;
+      addUser(newUser);
+      setUsers(prev => [...prev, newUser]);
+      window.alert(`User account created for ${newUser.name}.`);
+    }
+
+    setEditingUser(null);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Permanently revoke this user access? All portal data for this member will be inaccessible.')) {
+    if (window.confirm('Permanently revoke this user access?')) {
       deleteUser(id);
-      setUsers(users.filter(u => u.id !== id));
+      setUsers(prev => prev.filter(user => user.id !== id));
     }
   };
 
-  const handleResetPassword = (u: User) => {
-    const newPass = prompt(`Set new password for ${u.name}:`, 'user123');
-    if (newPass) {
-      resetUserPassword(u.id, newPass);
-      alert(`Password for ${u.name} has been reset.`);
+  const handlePasswordReset = () => {
+    if (!passwordResetUser) return;
+    if (newPassword.length < 8) {
+      window.alert('Password must be at least 8 characters long.');
+      return;
     }
+    resetUserPassword(passwordResetUser.id, newPassword);
+    window.alert(`Password for ${passwordResetUser.name} has been updated.`);
+    setPasswordResetUser(null);
+    setNewPassword('');
   };
-
-  const roles = [
-    { label: 'Super Admin', value: UserRole.SUPER_ADMIN },
-    { label: 'Manager Admin', value: UserRole.MID_ADMIN },
-    { label: 'Staff Admin', value: UserRole.STAFF_ADMIN },
-    { label: 'Donor', value: UserRole.DONOR },
-    { label: 'Volunteer', value: UserRole.VOLUNTEER },
-  ];
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>Personnel & Access Control</h2>
-          <p className="text-slate-400 text-xs font-bold tracking-widest mt-1">Provision administrative tiers and manage organizational members</p>
+          <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>Personnel & access control</h2>
+          <p className="mt-1 text-xs font-bold tracking-widest text-slate-400">Manage organisational members and portal roles</p>
         </div>
         <button
-          onClick={() => setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN })}
-          className="px-6 py-3 bg-slate-900 text-white font-black rounded-lg hover:bg-black transition-all text-[10px] tracking-widest shadow-xl"
+          onClick={() => setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN, password: '' })}
+          className="rounded-lg bg-slate-900 px-6 py-3 text-[10px] font-black tracking-widest text-white transition hover:bg-black"
         >
-          Add New User
+          Add new user
         </button>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-center justify-between bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-        <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto">
-          {(['All', 'Admins', 'Donors', 'Volunteers'] as FilterType[]).map((f) => (
+      <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm md:flex-row">
+        <div className="flex w-full rounded-lg bg-slate-100 p-1 md:w-auto">
+          {(['All', 'Admins', 'Donors', 'Volunteers'] as FilterType[]).map(filterItem => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                }`}
+              key={filterItem}
+              onClick={() => setFilter(filterItem)}
+              className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition ${filter === filterItem ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              {f}
+              {filterItem}
             </button>
           ))}
         </div>
         <div className="relative w-full md:w-80">
-          <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
+          <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
           <input
             type="text"
-            placeholder="Search by name or email..."
-            className="w-full pl-12 pr-6 py-3 bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-1 focus:ring-slate-400 text-xs"
+            placeholder="Search by name or email"
+            className="w-full rounded-lg border border-slate-100 bg-slate-50 py-3 pl-12 pr-6 text-xs outline-none focus:ring-1 focus:ring-slate-400"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
       {editingUser && (
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xl space-y-4 animate-in zoom-in-95">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-black uppercase tracking-tighter">
-              {editingUser.id ? 'Modify Access Permissions' : 'Provision New Account'}
-            </h3>
-            {!editingUser.id && <span className="px-3 py-1 bg-orange-50 text-orange-600 text-[9px] font-black uppercase rounded-lg border border-orange-100">Temp Pass: user123</span>}
+        <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-xl animate-in zoom-in-95">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-xl font-black uppercase tracking-tighter">{editingUser.id ? 'Modify access permissions' : 'Provision new account'}</h3>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-2">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Full Name</label>
-              <input className="w-full bg-slate-50 border border-slate-100 rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.name || ''} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} placeholder="e.g. Sarah Namono" />
+              <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Full name</label>
+              <input className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.name || ''} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} placeholder="Enter full name" />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Email Address</label>
-              <input className="w-full bg-slate-50 border border-slate-100 rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.email || ''} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} placeholder="email@naanghirisa.org" />
+              <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Email address</label>
+              <input className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.email || ''} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} placeholder="name@organisation.org" />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Phone Number</label>
-              <input className="w-full bg-slate-50 border border-slate-100 rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} placeholder="07... / +256..." />
+              <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Phone number</label>
+              <input className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} placeholder="07... / +256..." />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Permission Tier</label>
-              <select className="w-full bg-slate-50 border border-slate-100 rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}>
-                {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Permission tier</label>
+              <select className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.role || UserRole.STAFF_ADMIN} onChange={e => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}>
+                {roles.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2 border-t border-slate-100">
-            <button onClick={handleSave} className="px-5 py-2 bg-orange-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-orange-700 shadow-lg shadow-orange-100 transition-all">
-              {editingUser.id ? 'Save Updates' : 'Confirm & Provision Account'}
-            </button>
-            <button onClick={() => setEditingUser(null)} className="px-5 py-2 bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-200">Discard</button>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Password</label>
+              <input
+                type="password"
+                className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500"
+                value={editingUser.password || ''}
+                onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
+                placeholder={editingUser.id ? 'Leave blank to keep current password' : 'Minimum 8 characters'}
+              />
+            </div>
+            <div className="flex items-end justify-start gap-2 pt-5">
+              <button onClick={handleSave} className="rounded-lg bg-orange-600 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-100 transition hover:bg-orange-700">
+                {editingUser.id ? 'Save updates' : 'Create account'}
+              </button>
+              <button onClick={() => setEditingUser(null)} className="rounded-lg bg-slate-100 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 transition hover:bg-slate-200">
+                Discard
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+      {passwordResetUser && (
+        <div className="rounded-lg border border-orange-100 bg-white p-5 shadow-xl">
+          <h3 className="text-lg font-black uppercase tracking-tight">Reset password for {passwordResetUser.name}</h3>
+          <div className="mt-4 flex flex-col gap-3 md:flex-row">
+            <input
+              type="password"
+              className="w-full rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 outline-none focus:ring-1 focus:ring-orange-400"
+              placeholder="Create a new password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+            />
+            <button onClick={handlePasswordReset} className="rounded-lg bg-slate-900 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-black">
+              Update password
+            </button>
+            <button onClick={() => { setPasswordResetUser(null); setNewPassword(''); }} className="rounded-lg bg-slate-100 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-[400px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         {filteredUsers.length > 0 ? (
           <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="px-10 py-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em]">Member Profile</th>
-                <th className="px-10 py-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em]">Contact Channels</th>
-                <th className="px-10 py-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em]">System Tier</th>
-                <th className="px-10 py-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em] text-right">Actions</th>
+                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Member profile</th>
+                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact channels</th>
+                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">System tier</th>
+                <th className="px-10 py-5 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredUsers.map(u => (
-                <tr key={u.id} className="hover:bg-slate-200/50 transition-colors">
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-2xl bg-red-900 text-white flex items-center justify-center font-black text-xs overflow-hidden">
-                        {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : u.name.charAt(0)}
+              {filteredUsers.map(user => (
+                <tr key={user.id} className="transition hover:bg-slate-50/70">
+                  <td className="px-8 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-slate-900 text-xs font-black text-white">
+                        {user.avatar ? <img src={user.avatar} className="h-full w-full object-cover" alt={user.name} /> : user.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-black text-slate-900 text-sm tracking-tight">{u.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 tracking-widest">ID: {u.id}</p>
+                        <p className="text-sm font-black tracking-tight text-slate-900">{user.name}</p>
+                        <p className="text-[10px] font-bold tracking-widest text-slate-400">ID: {user.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-10 py-1">
+                  <td className="px-10 py-4">
                     <div className="space-y-1">
-                      {u.email && <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500"><i className="fas fa-envelope text-[8px]"></i> {u.email}</div>}
-                      {u.phone && <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500"><i className="fas fa-phone text-[8px]"></i> {u.phone}</div>}
+                      {user.email && <div className="text-[10px] font-bold text-slate-500"><i className="fas fa-envelope mr-2 text-[8px]" />{user.email}</div>}
+                      {user.phone && <div className="text-[10px] font-bold text-slate-500"><i className="fas fa-phone mr-2 text-[8px]" />{user.phone}</div>}
                     </div>
                   </td>
-                  <td className="px-10 py-1">
-                    <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border ${[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(u.role)
-                      ? 'bg-red-50 text-red-600 border-red-100'
-                      : u.role === UserRole.DONOR
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                        : 'bg-blue-50 text-blue-600 border-blue-100'
-                      }`}>
-                      {roles.find(r => r.value === u.role)?.label || u.role.replace('_', ' ')}
+                  <td className="px-10 py-4">
+                    <span className={`rounded-lg border px-3 py-1 text-[9px] font-black uppercase tracking-widest ${[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(user.role)
+                      ? 'border-orange-100 bg-orange-50 text-orange-600'
+                      : user.role === UserRole.DONOR
+                        ? 'border-emerald-100 bg-emerald-50 text-emerald-600'
+                        : 'border-blue-100 bg-blue-50 text-blue-600'}`}
+                    >
+                      {roles.find(role => role.value === user.role)?.label || user.role.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-10 py-1 text-right space-x-3">
-                    <button onClick={() => handleResetPassword(u)} title="Reset Password" className="text-slate-300 hover:text-orange-600 transition-colors"><i className="fas fa-key"></i></button>
-                    <button onClick={() => setEditingUser(u)} title="Edit Details" className="text-slate-300 hover:text-blue-600 transition-colors"><i className="fas fa-user-edit"></i></button>
-                    <button onClick={() => handleDelete(u.id)} title="Revoke Access" className="text-slate-300 hover:text-red-600 transition-colors"><i className="fas fa-user-minus"></i></button>
+                  <td className="px-10 py-4 text-right space-x-3">
+                    <button onClick={() => { setPasswordResetUser(user); setNewPassword(''); }} title="Reset password" className="text-slate-300 transition hover:text-orange-600"><i className="fas fa-key" /></button>
+                    <button onClick={() => setEditingUser({ ...user })} title="Edit details" className="text-slate-300 transition hover:text-blue-600"><i className="fas fa-user-edit" /></button>
+                    <button onClick={() => handleDelete(user.id)} title="Revoke access" className="text-slate-300 transition hover:text-red-600"><i className="fas fa-user-minus" /></button>
                   </td>
                 </tr>
               ))}
@@ -215,9 +265,11 @@ const UserManager: React.FC = () => {
           </table>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-            <i className="fas fa-users-slash text-5xl mb-4"></i>
-            <p className="font-black text-xs uppercase tracking-widest">No members found matching these criteria</p>
-            <button onClick={() => { setFilter('All'); setSearchTerm(''); }} className="mt-4 text-orange-600 font-bold text-[10px] uppercase hover:underline">Clear all filters</button>
+            <i className="fas fa-users-slash mb-4 text-5xl" />
+            <p className="text-xs font-black uppercase tracking-widest">No members found</p>
+            <button onClick={() => { setFilter('All'); setSearchTerm(''); }} className="mt-4 text-[10px] font-bold uppercase text-orange-600 hover:underline">
+              Clear filters
+            </button>
           </div>
         )}
       </div>

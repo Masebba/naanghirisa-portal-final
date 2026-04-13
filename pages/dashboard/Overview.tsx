@@ -1,121 +1,132 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { summarizeImpact } from '../../services/geminiService';
-import { mockPrograms, getDonations, getVolunteers, updateTaskProgress } from '../../services/mockData';
+import { getCampaigns, getDonations, getPrograms, getVolunteers, updateTaskProgress } from '../../services/mockData';
 import { authService } from '../../services/authService';
 import { UserRole, VolunteerTask } from '../../types';
 
 const Overview: React.FC = () => {
   const user = authService.getCurrentUser();
   const navigate = useNavigate();
-  const [aiSummary, setAiSummary] = useState<string>('');
+  const [summary, setSummary] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const allDonations = getDonations();
-  const myDonations = useMemo(() => allDonations.filter(d => d.donorName === user?.name), [allDonations, user]);
-  const totalDonations = allDonations.reduce((acc, curr) => acc + curr.amount, 0);
-  const myTotalGiving = myDonations.reduce((acc, curr) => acc + curr.amount, 0);
-
+  const programs = getPrograms();
+  const campaigns = getCampaigns();
+  const donations = getDonations();
   const volunteers = getVolunteers();
-  const myVolunteerProfile = useMemo(() => volunteers.find(v => v.email === user?.email), [volunteers, user]);
+
+  const myDonations = useMemo(() => donations.filter(donation => donation.donorName === user?.name), [donations, user]);
+  const myTotalGiving = myDonations.reduce((sum, donation) => sum + donation.amount, 0);
+  const totalDonations = donations.reduce((sum, donation) => sum + donation.amount, 0);
+  const activeCampaigns = campaigns.filter(campaign => campaign.status === 'Active').length;
+  const myVolunteerProfile = useMemo(() => volunteers.find(volunteer => volunteer.email === user?.email), [volunteers, user]);
   const myTasks = myVolunteerProfile?.tasks || [];
+  const completedTasks = myTasks.filter(task => task.status === 'Completed').length;
 
   const handleGenerateSummary = async () => {
     setIsGenerating(true);
-    const summary = await summarizeImpact(JSON.stringify(mockPrograms));
-    setAiSummary(summary || "No summary available.");
+    const result = await summarizeImpact(JSON.stringify(programs));
+    setSummary(result);
     setIsGenerating(false);
   };
 
   const handleTaskUpdate = (taskId: string, progress: number) => {
     if (user && myVolunteerProfile) {
       updateTaskProgress(myVolunteerProfile.id, taskId, progress);
-      // We perform a soft update here normally, but since we are simulating persistence
-      // we'll just trigger a re-render or let the user refresh
+      setSummary('Task progress updated. Refresh the dashboard to see the latest status.');
     }
   };
 
-  const isFullAdmin = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN].includes(user?.role as UserRole);
-  const isStaff = user?.role === UserRole.STAFF_ADMIN;
-  const isAnyAdmin = isFullAdmin || isStaff;
+  const isAdmin = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(user?.role as UserRole);
+  const isDonor = user?.role === UserRole.DONOR;
+  const isVolunteer = user?.role === UserRole.VOLUNTEER;
+
+  const cards = isAdmin
+    ? [
+        { label: 'Gross giving', value: `$${totalDonations.toLocaleString()}`, icon: 'fa-wallet', color: 'from-orange-500 to-orange-600' },
+        { label: 'Programs', value: programs.length.toString(), icon: 'fa-heart-pulse', color: 'from-blue-500 to-blue-600' },
+        { label: 'Active campaigns', value: activeCampaigns.toString(), icon: 'fa-bullhorn', color: 'from-emerald-500 to-emerald-600' },
+        { label: 'Team members', value: volunteers.length.toString(), icon: 'fa-users', color: 'from-slate-700 to-slate-800' },
+      ]
+    : isDonor
+      ? [
+          { label: 'My giving', value: `$${myTotalGiving.toLocaleString()}`, icon: 'fa-heart', color: 'from-orange-500 to-orange-600' },
+          { label: 'My donations', value: myDonations.length.toString(), icon: 'fa-receipt', color: 'from-blue-500 to-blue-600' },
+          { label: 'Supported children', value: Math.floor(myTotalGiving / 250).toString(), icon: 'fa-child-reaching', color: 'from-emerald-500 to-emerald-600' },
+          { label: 'Portal status', value: 'Active', icon: 'fa-user-check', color: 'from-slate-700 to-slate-800' },
+        ]
+      : [
+          { label: 'Missions', value: myTasks.length.toString(), icon: 'fa-list-check', color: 'from-orange-500 to-orange-600' },
+          { label: 'Completed', value: completedTasks.toString(), icon: 'fa-circle-check', color: 'from-emerald-500 to-emerald-600' },
+          { label: 'Programs', value: programs.length.toString(), icon: 'fa-briefcase', color: 'from-blue-500 to-blue-600' },
+          { label: 'Recognition', value: myVolunteerProfile?.documents?.length ? `${myVolunteerProfile.documents.length}` : '0', icon: 'fa-certificate', color: 'from-slate-700 to-slate-800' },
+        ];
+
+  const rowItems = user?.role === UserRole.VOLUNTEER
+    ? myTasks
+    : (isAdmin ? donations : myDonations).slice(0, 5);
 
   return (
-    <div className="space-y-4 md:space-y-6 ">
-      {/* Dynamic Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 ">
-        {isAnyAdmin ? (
-          <>
-            <StatCard label="Gross Giving" value={`$${totalDonations.toLocaleString()}`} icon="fa-wallet" color="from-emerald-500 to-emerald-600" />
-            <StatCard label="Active Programs" value="4" icon="fa-heart-pulse" color="from-blue-500 to-blue-600" />
-            <StatCard label="Directives" value="5" icon="fa-clock-rotate-left" color="from-orange-500 to-orange-600" />
-            <StatCard label="Team Size" value={volunteers.length.toString()} icon="fa-users" color="from-red-700 to-red-800" />
-          </>
-        ) : user?.role === UserRole.DONOR ? (
-          <>
-            <StatCard label="My Giving" value={`$${myTotalGiving.toLocaleString()}`} icon="fa-heart" color="from-pink-500 to-rose-600" />
-            <StatCard label="Impacted" value="12" icon="fa-child-reaching" color="from-blue-500 to-indigo-600" />
-            <StatCard label="Status" value="Active" icon="fa-user-check" color="from-orange-500 to-amber-600" />
-            <StatCard label="Tier" value="Gold" icon="fa-award" color="from-yellow-500 to-orange-600" />
-          </>
-        ) : (
-          <>
-            <StatCard label="Missions" value={myTasks.length.toString()} icon="fa-list-check" color="from-blue-500 to-blue-600" />
-            <StatCard label="Field Hours" value="24" icon="fa-hourglass-half" color="from-emerald-500 to-emerald-600" />
-            <StatCard label="Points" value="450" icon="fa-certificate" color="from-orange-500 to-orange-600" />
-            <StatCard label="Personnel" value="Verified" icon="fa-user-check" color="from-slate-700 to-slate-800" />
-          </>
-        )}
+    <div className="space-y-4 md:space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map(card => <StatCard key={card.label} {...card} />)}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg border border-slate-200/50 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 md:p-10 border-b border-slate-100 flex justify-between items-center">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <div className="flex flex-col overflow-hidden rounded-lg border border-slate-200/50 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6 md:p-10">
               <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">
-                {isAnyAdmin ? 'Operational Log' : user?.role === UserRole.DONOR ? 'Giving Record' : 'Current Directives'}
+                {isVolunteer ? 'Volunteer tasks' : isDonor ? 'Giving record' : 'Operational log'}
               </h3>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[500px] ">
+              <table className="min-w-[500px] w-full text-left">
                 <thead className="bg-slate-50/50">
                   <tr>
-                    <th className="px-6 md:px-10 py-4 font-black text-slate-400 text-[8px] uppercase tracking-widest">{isAnyAdmin ? 'Entity' : 'Detail'}</th>
-                    <th className="px-6 md:px-10 py-4 font-black text-slate-400 text-[8px] uppercase tracking-widest">Update</th>
-                    <th className="px-6 md:px-10 py-4 font-black text-slate-400 text-[8px] uppercase tracking-widest text-right">Status</th>
+                    <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400">{isVolunteer ? 'Task' : isAdmin ? 'Source' : 'Entry'}</th>
+                    <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400">Update</th>
+                    <th className="px-6 py-4 text-right text-[8px] font-black uppercase tracking-widest text-slate-400">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {user?.role === UserRole.VOLUNTEER ? (
-                    myTasks.map((t: VolunteerTask) => (
-                      <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 md:px-10 py-5">
-                          <p className="font-bold text-slate-900 text-xs uppercase">{t.title}</p>
+                    myTasks.length > 0 ? myTasks.map((task: VolunteerTask) => (
+                      <tr key={task.id} className="transition hover:bg-slate-50/50">
+                        <td className="px-6 py-5">
+                          <p className="text-xs font-bold uppercase text-slate-900">{task.title}</p>
                         </td>
-                        <td className="px-6 md:px-10 py-5">
+                        <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <input type="range" min="0" max="100" value={t.progress} onChange={(e) => handleTaskUpdate(t.id, parseInt(e.target.value))} className="w-16 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-600" />
-                            <span className="text-[10px] font-black text-orange-600">{t.progress}%</span>
+                            <input type="range" min="0" max="100" value={task.progress} onChange={(e) => handleTaskUpdate(task.id, parseInt(e.target.value))} className="h-1 w-20 cursor-pointer appearance-none rounded-lg bg-slate-200 accent-orange-600" />
+                            <span className="text-[10px] font-black text-orange-600">{task.progress}%</span>
                           </div>
                         </td>
-                        <td className="px-6 md:px-10 py-5 text-right">
-                          <span className={`px-2 py-1 text-[8px] font-black uppercase rounded-md border ${t.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{t.status}</span>
+                        <td className="px-6 py-5 text-right">
+                          <span className={`rounded-md border px-2 py-1 text-[8px] font-black uppercase ${task.status === 'Completed' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-orange-100 bg-orange-50 text-orange-600'}`}>
+                            {task.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={3} className="px-6 py-10 text-center text-sm text-slate-400">No volunteer tasks assigned yet.</td></tr>
+                    )
+                  ) : rowItems.length > 0 ? (
+                    rowItems.map((item: any) => (
+                      <tr key={item.id} className="transition hover:bg-slate-50/50">
+                        <td className="px-6 py-5">
+                          <p className="text-xs font-bold text-slate-900">{isAdmin ? item.donorName : item.campaignId || item.category || item.title}</p>
+                        </td>
+                        <td className="px-6 py-5 text-xs font-black text-emerald-600">{isAdmin ? `$${item.amount.toLocaleString()}` : item.date || 'Pending'}</td>
+                        <td className="px-6 py-5 text-right">
+                          <span className="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase text-emerald-600">Verified</span>
                         </td>
                       </tr>
                     ))
                   ) : (
-                    (isAnyAdmin ? allDonations : user?.role === UserRole.DONOR ? myDonations : []).slice(0, 5).map((d: any) => (
-                      <tr key={d.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 md:px-10 py-5">
-                          <p className="font-bold text-slate-900 text-xs">{isAnyAdmin ? d.donorName : d.campaignId}</p>
-                        </td>
-                        <td className="px-6 md:px-10 py-5 font-black text-emerald-600 text-xs">${d.amount.toLocaleString()}</td>
-                        <td className="px-6 md:px-10 py-5 text-right">
-                          <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase rounded-md border border-emerald-100">Verified</span>
-                        </td>
-                      </tr>
-                    ))
+                    <tr><td colSpan={3} className="px-6 py-10 text-center text-sm text-slate-400">No records available yet.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -124,35 +135,29 @@ const Overview: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          {isAnyAdmin && (
-            <div className="bg-slate-900 rounded-lg p-4 text-white relative overflow-hidden flex flex-col group shadow-xl">
+          {isAdmin && (
+            <div className="group relative flex flex-col overflow-hidden rounded-lg bg-slate-900 p-5 text-white shadow-xl">
               <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500 border border-white/10 shadow-inner"><i className="fas fa-microchip"></i></div>
-                  <h3 className="text-base font-black uppercase tracking-tight">Impact AI</h3>
+                <div className="mb-6 flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-orange-500 shadow-inner"><i className="fas fa-microchip" /></div>
+                  <h3 className="text-base font-black uppercase tracking-tight">Impact summary</h3>
                 </div>
-                {aiSummary && <div className="bg-white/5 p-4 rounded-lg text-[10px] leading-relaxed mb-6 border border-white/5 text-slate-300 italic max-h-[150px] overflow-y-auto">"{aiSummary}"</div>}
-                <button onClick={handleGenerateSummary} disabled={isGenerating} className="w-full py-4 bg-orange-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg transition-all">
-                  {isGenerating ? <i className="fas fa-spinner fa-spin"></i> : 'Run Analysis'}
+                {summary && <div className="mb-6 max-h-[180px] overflow-y-auto rounded-lg border border-white/5 bg-white/5 p-4 text-[10px] italic leading-relaxed text-slate-300">{summary}</div>}
+                <button onClick={handleGenerateSummary} disabled={isGenerating} className="w-full rounded-lg bg-orange-600 px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-orange-700">
+                  {isGenerating ? 'Running…' : 'Generate summary'}
                 </button>
               </div>
             </div>
           )}
 
-          <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-lg">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Quick Links</h4>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-lg">
+            <h4 className="mb-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Quick links</h4>
             <div className="grid gap-3">
-              <button
-                onClick={() => navigate('/dashboard/accountability', { state: { openRequest: true } })}
-                className="w-full py-4 px-6 bg-orange-600 text-white font-black text-[9px] uppercase tracking-widest rounded-lg text-left flex items-center justify-between hover:bg-orange-700 transition-colors shadow-lg shadow-orange-100"
-              >
-                Make Request <i className="fas fa-plus"></i>
+              <button onClick={() => navigate('/dashboard/accountability', { state: { openRequest: true } })} className="flex w-full items-center justify-between rounded-lg bg-orange-600 px-5 py-4 text-left text-[9px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-100 transition hover:bg-orange-700">
+                Make request <i className="fas fa-plus" />
               </button>
-              <button
-                onClick={() => navigate('/dashboard/transparency')}
-                className="w-full py-4 px-6 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest rounded-lg text-left flex items-center justify-between hover:bg-black transition-colors"
-              >
-                Audit Logs <i className="fas fa-file-invoice"></i>
+              <button onClick={() => navigate('/dashboard/transparency')} className="flex w-full items-center justify-between rounded-lg bg-slate-900 px-5 py-4 text-left text-[9px] font-black uppercase tracking-widest text-white transition hover:bg-black">
+                Audit logs <i className="fas fa-file-invoice" />
               </button>
             </div>
           </div>
@@ -163,11 +168,11 @@ const Overview: React.FC = () => {
 };
 
 const StatCard: React.FC<{ label: string; value: string; icon: string; color: string }> = ({ label, value, icon, color }) => (
-  <div className="bg-white p-6 rounded-lg border border-slate-200/50 shadow-sm flex items-center gap-4 hover:shadow-lg transition-all">
-    <div className={`w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center text-lg text-white shadow-lg`}><i className={`fas ${icon}`}></i></div>
+  <div className="flex items-center gap-4 rounded-lg border border-slate-200/50 bg-white p-6 shadow-sm transition hover:shadow-lg">
+    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-lg text-white shadow-lg`}><i className={`fas ${icon}`} /></div>
     <div>
-      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter">{value}</p>
+      <p className="mb-1 text-[8px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="text-xl font-black tracking-tighter text-slate-900 md:text-2xl">{value}</p>
     </div>
   </div>
 );

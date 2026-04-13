@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ToastViewport } from './components/ToastViewport';
 import Home from './pages/Home';
 import About from './pages/About';
 import Programs from './pages/Programs';
@@ -59,47 +59,53 @@ const App: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <Routes>
-      <Route path="/" element={<Layout><Home /></Layout>} />
-      <Route path="/about" element={<Layout><About /></Layout>} />
-      <Route path="/programs" element={<Layout><Programs /></Layout>} />
-      <Route path="/programs/:id" element={<Layout><ProgramDetail /></Layout>} />
-      <Route path="/transparency" element={<Layout><Transparency /></Layout>} />
-      <Route path="/campaigns" element={<Layout><Campaigns /></Layout>} />
-      <Route path="/campaigns/:id" element={<Layout><CampaignDetail /></Layout>} />
-      <Route path="/news" element={<Layout><News /></Layout>} />
-      <Route path="/news/:id" element={<Layout><NewsDetail /></Layout>} />
-      <Route path="/contact" element={<Layout><Contact /></Layout>} />
-      <Route path="/volunteer" element={<Layout><Volunteer /></Layout>} />
-      <Route path="/donate" element={<Layout><Donate /></Layout>} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+    <>
+      <ToastViewport />
+      <Routes>
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
+        <Route path="/programs" element={<Layout><Programs /></Layout>} />
+        <Route path="/programs/:id" element={<Layout><ProgramDetail /></Layout>} />
+        <Route path="/transparency" element={<Layout><Transparency /></Layout>} />
+        <Route path="/campaigns" element={<Layout><Campaigns /></Layout>} />
+        <Route path="/campaigns/:id" element={<Layout><CampaignDetail /></Layout>} />
+        <Route path="/news" element={<Layout><News /></Layout>} />
+        <Route path="/news/:id" element={<Layout><NewsDetail /></Layout>} />
+        <Route path="/contact" element={<Layout><Contact /></Layout>} />
+        <Route path="/volunteer" element={<Layout><Volunteer /></Layout>} />
+        <Route path="/donate" element={<Layout><Donate /></Layout>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      <Route path="/dashboard/*" element={
-        <ProtectedRoute>
-          <DashboardLayout user={user || { name: 'Guest', role: UserRole.GUEST, email: '', id: '' }}>
-            <Routes>
-              <Route index element={<Overview />} />
-              <Route path="users" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN]}><UserManager /></ProtectedRoute>} />
-              <Route path="accountability" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.VOLUNTEER]}><AccountabilityManager /></ProtectedRoute>} />
-              <Route path="content" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><ContentManager /></ProtectedRoute>} />
-              <Route path="about" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><AboutManager /></ProtectedRoute>} />
-              <Route path="programs" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN]}><ProgramsManager /></ProtectedRoute>} />
-              <Route path="transparency" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><TransparencyManager /></ProtectedRoute>} />
-              <Route path="campaigns" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><CampaignsManager /></ProtectedRoute>} />
-              <Route path="news" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN]}><NewsManager /></ProtectedRoute>} />
-              <Route path="donations" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><DonationsManager /></ProtectedRoute>} />
-              <Route path="volunteers" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.VOLUNTEER]}><VolunteerManager /></ProtectedRoute>} />
-              <Route path="feedback" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><FeedbackManager /></ProtectedRoute>} />
-              <Route path="contact" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><ContactManager /></ProtectedRoute>} />
-              <Route path="profile" element={<ProfileSettings />} />
-              <Route path="settings" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN]}><SystemSettings /></ProtectedRoute>} />
-            </Routes>
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout user={user || { name: 'Guest', role: UserRole.GUEST, email: '', id: '' }}>
+                <Routes>
+                  <Route index element={<Overview />} />
+                  <Route path="users" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN]}><UserManager /></ProtectedRoute>} />
+                  <Route path="accountability" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.VOLUNTEER]}><AccountabilityManager /></ProtectedRoute>} />
+                  <Route path="content" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><ContentManager /></ProtectedRoute>} />
+                  <Route path="about" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><AboutManager /></ProtectedRoute>} />
+                  <Route path="programs" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN]}><ProgramsManager /></ProtectedRoute>} />
+                  <Route path="transparency" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><TransparencyManager /></ProtectedRoute>} />
+                  <Route path="campaigns" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><CampaignsManager /></ProtectedRoute>} />
+                  <Route path="news" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN]}><NewsManager /></ProtectedRoute>} />
+                  <Route path="donations" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><DonationsManager /></ProtectedRoute>} />
+                  <Route path="volunteers" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.VOLUNTEER]}><VolunteerManager /></ProtectedRoute>} />
+                  <Route path="feedback" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER]}><FeedbackManager /></ProtectedRoute>} />
+                  <Route path="contact" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN, UserRole.MID_ADMIN]}><ContactManager /></ProtectedRoute>} />
+                  <Route path="profile" element={<ProfileSettings />} />
+                  <Route path="settings" element={<ProtectedRoute roles={[UserRole.SUPER_ADMIN]}><SystemSettings /></ProtectedRoute>} />
+                </Routes>
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
   );
 };
 

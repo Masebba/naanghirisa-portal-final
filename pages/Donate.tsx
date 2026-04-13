@@ -1,12 +1,13 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { getCampaigns, getPrograms, addDonation, addUser, getUsers } from '../services/mockData';
-import { COLORS, BRAND } from '../constants';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { COLORS } from '../constants';
 import { authService } from '../services/authService';
-import { Campaign, Program, UserRole, User } from '../types';
+import { addDonation, getCampaigns, getPrograms } from '../services/mockData';
+import { Campaign, Program } from '../types';
 
 type PaymentMethod = 'MTN' | 'AIRTEL' | 'CARD';
+
+const presetAmounts = [25, 50, 100, 500];
 
 const Donate: React.FC = () => {
   const location = useLocation();
@@ -16,119 +17,79 @@ const Donate: React.FC = () => {
   const initialProgramId = searchParams.get('program');
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedTarget, setSelectedTarget] = useState<{id: string, name: string, type: 'Campaign' | 'Program' | 'General'} | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<{ id: string; name: string; type: 'Campaign' | 'Program' | 'General' } | null>(null);
   const [amount, setAmount] = useState<number>(0);
-  
-  // Guest Identity States
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
-  
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processMsg, setProcessMsg] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [receipt, setReceipt] = useState<{ reference: string; target: string } | null>(null);
 
-  const campaigns = getCampaigns().filter(c => c.status === 'Active');
+  const campaigns = getCampaigns().filter(campaign => campaign.status === 'Active');
   const programs = getPrograms();
 
   useEffect(() => {
     if (initialCampaignId) {
-      const found = campaigns.find(c => c.id === initialCampaignId);
+      const found = campaigns.find(campaign => campaign.id === initialCampaignId);
       if (found) setSelectedTarget({ id: found.id, name: found.name, type: 'Campaign' });
     } else if (initialProgramId) {
-      const found = programs.find(p => p.id === initialProgramId);
+      const found = programs.find(program => program.id === initialProgramId);
       if (found) setSelectedTarget({ id: found.id, name: found.name, type: 'Program' });
     }
-  }, [initialCampaignId, initialProgramId, campaigns, programs]);
+  }, [campaigns, initialCampaignId, initialProgramId, programs]);
 
-  const handleProcess = () => {
-    if ((paymentMethod === 'MTN' || paymentMethod === 'AIRTEL') && phone.length < 9) {
-      alert("Please enter a valid Ugandan phone number.");
+  const handleProcess = async () => {
+    if (!selectedTarget) return;
+    if ((paymentMethod === 'MTN' || paymentMethod === 'AIRTEL') && phone.replace(/\D/g, '').length < 9) {
+      window.alert('Please enter a valid Ugandan phone number.');
       return;
     }
 
     setIsProcessing(true);
-    setProcessMsg(`Connecting to ${paymentMethod} Gateway...`);
+    await new Promise(resolve => window.setTimeout(resolve, 700));
 
-    // Simulated Secure Handshake
-    setTimeout(() => {
-      setProcessMsg("Waiting for authorization on your mobile device...");
-      setTimeout(() => {
-        setProcessMsg("PIN Verified. Syncing Identity & Ledger...");
-        setTimeout(() => {
-          const targetId = selectedTarget?.id || 'General';
-          const targetCategory = selectedTarget?.type === 'Campaign' ? 'Campaign Support' : 
-                                selectedTarget?.type === 'Program' ? 'Program Fund' : 'General Welfare';
+    const finalName = user?.name || guestName.trim() || 'Anonymous Supporter';
+    const targetLabel = selectedTarget.type === 'General' ? 'General Welfare' : selectedTarget.name;
+    const targetId = selectedTarget.type === 'General' ? 'General' : selectedTarget.id;
 
-          const finalName = user?.name || guestName || 'Public Supporter';
-          const finalEmail = user?.email || guestEmail;
-          const finalPhone = user?.phone || (paymentMethod !== 'CARD' ? `0${phone.replace(/^0+/, '')}` : '');
+    addDonation({
+      id: `donation_${Date.now()}`,
+      donorName: finalName,
+      amount,
+      campaignId: targetId,
+      category: selectedTarget.type,
+      date: new Date().toISOString().split('T')[0],
+      description: `${finalName} contributed via ${paymentMethod || 'CARD'} to ${targetLabel}`,
+    });
 
-          // AUTOMATIC ACCOUNT PROVISIONING FOR GUESTS
-          if (!user && finalEmail) {
-             const existingUsers = getUsers();
-             const alreadyExists = existingUsers.find(u => u.email.toLowerCase() === finalEmail.toLowerCase() || (finalPhone && u.phone === finalPhone));
-             
-             if (!alreadyExists) {
-                const newUser: User = {
-                   id: `u${Date.now()}`,
-                   name: finalName,
-                   email: finalEmail,
-                   phone: finalPhone,
-                   role: UserRole.DONOR,
-                   password: 'user123', // Default temporary password as per guideline
-                   avatar: `https://i.pravatar.cc/150?u=${finalEmail}`
-                };
-                addUser(newUser);
-             }
-          }
-
-          addDonation({
-            id: `gift-${Date.now()}`,
-            donorName: finalName,
-            amount: amount,
-            campaignId: targetId,
-            category: targetCategory,
-            date: new Date().toISOString().split('T')[0],
-            description: `Gift to ${selectedTarget?.name || 'General Fund'} via ${paymentMethod}`
-          });
-          
-          setIsProcessing(false);
-          setSuccess(true);
-        }, 1500);
-      }, 3000);
-    }, 1500);
+    setReceipt({ reference: `NAA-${Date.now()}`, target: targetLabel });
+    setIsProcessing(false);
+    setStep(4);
   };
 
-  if (success) {
+  if (step === 4 && receipt) {
     return (
-      <div className="min-h-screen bg-orange-50 flex items-center justify-center p-6 font-inter">
-        <div className="bg-white max-w-xl w-full rounded-[4rem] p-12 text-center shadow-2xl animate-in zoom-in-95 duration-500 border border-orange-100">
-          <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-8 shadow-inner ring-8 ring-emerald-50/50">
-            <i className="fas fa-heart"></i>
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-xl rounded-[2.5rem] border border-orange-100 bg-white p-10 text-center shadow-2xl">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-3xl text-emerald-600">
+            <i className="fas fa-heart" />
           </div>
-          <h2 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tighter">Impact Confirmed!</h2>
-          <p className="text-slate-600 mb-6 leading-relaxed text-lg">
-            Your generous gift of <span className="font-black text-slate-900">${amount.toLocaleString()}</span> has been processed. 
+          <h2 className="text-3xl font-black tracking-tight text-slate-900">Donation received</h2>
+          <p className="mt-4 text-slate-600">
+            Thank you for supporting <span className="font-black text-slate-900">{receipt.target}</span> with <span className="font-black text-slate-900">${amount.toLocaleString()}</span>.
           </p>
-          
-          {!user && (
-            <div className="mb-10 p-6 bg-slate-50 rounded-3xl border border-slate-100 text-left">
-               <p className="text-xs font-black text-slate-900 uppercase tracking-widest mb-2"><i className="fas fa-user-plus text-orange-500 mr-2"></i> Account Provisioned</p>
-               <p className="text-[11px] text-slate-500 leading-relaxed">
-                 We've created a donor account for you. You can now log in to the portal using your email and the default password: <span className="font-black text-orange-600">user123</span> to view your impact certificates and tax receipts.
-               </p>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-4">
-             {!user ? (
-               <Link to="/login" className="py-5 bg-orange-600 text-white font-black rounded-2xl uppercase text-xs tracking-widest hover:bg-orange-700 shadow-xl transition-all">Go to Portal Log In</Link>
-             ) : (
-               <Link to="/dashboard/donations" className="py-5 bg-slate-900 text-white font-black rounded-2xl uppercase text-xs tracking-widest hover:bg-black shadow-xl transition-all">View Donation Record</Link>
-             )}
-             <Link to="/" className="py-5 bg-slate-100 text-slate-500 font-black rounded-2xl uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Return Home</Link>
+          <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50 p-5 text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Receipt reference</p>
+            <p className="mt-2 font-black text-slate-900">{receipt.reference}</p>
+          </div>
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <Link to="/dashboard/donations" className="flex-1 rounded-2xl bg-slate-900 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition hover:bg-black">
+              View in dashboard
+            </Link>
+            <Link to="/" className="flex-1 rounded-2xl bg-slate-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-slate-600 transition hover:bg-slate-200">
+              Return home
+            </Link>
           </div>
         </div>
       </div>
@@ -136,228 +97,200 @@ const Donate: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-20 px-4 font-inter">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-black uppercase tracking-tighter mb-4" style={{ color: COLORS.primary }}>Change a Life Today</h1>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Step {step} of 4: {
-            step === 1 ? 'Target Selection' : 
-            step === 2 ? 'Amount & Identity' : 
-            step === 3 ? 'Payment Method' : 'Confirmation'
-          }</p>
+    <div className="min-h-screen bg-slate-50 px-4 py-16">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl" style={{ color: COLORS.primary }}>
+            Change a life today
+          </h1>
+          <p className="mt-4 text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+            Step {step} of 3
+          </p>
         </div>
 
-        <div className="bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-slate-200 relative">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-2xl">
           {isProcessing && (
-            <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-20 h-20 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin mb-8"></div>
-              <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tighter">Secure Processing</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest animate-pulse">{processMsg}</p>
-              {processMsg.includes("authorization") && (
-                <p className="mt-8 text-xs text-orange-600 font-bold bg-orange-50 px-4 py-2 rounded-full border border-orange-100 animate-bounce">Please authorize on your phone screen</p>
-              )}
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/90 px-6 text-center backdrop-blur-sm">
+              <div>
+                <div className="mx-auto mb-6 h-14 w-14 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500" />
+                <p className="text-lg font-black uppercase tracking-tight text-slate-900">Processing donation</p>
+                <p className="mt-2 text-xs font-black uppercase tracking-[0.25em] text-slate-400">Securing your contribution</p>
+              </div>
             </div>
           )}
 
-          <div className="p-10 md:p-16">
+          <div className="p-8 md:p-12">
             {step === 1 && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 space-y-10">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Select your impact target</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div 
-                    onClick={() => setSelectedTarget({id: 'General', name: 'General Welfare', type: 'General'})}
-                    className={`p-8 rounded-[2.5rem] border-2 cursor-pointer transition-all ${selectedTarget?.id === 'General' ? 'border-orange-500 bg-orange-50 shadow-xl' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
+              <div className="space-y-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Select a support target</h3>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTarget({ id: 'General', name: 'General Welfare', type: 'General' })}
+                    className={`rounded-[2rem] border-2 p-6 text-left transition ${selectedTarget?.id === 'General' ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
                   >
-                    <i className="fas fa-globe text-3xl mb-6 text-orange-600"></i>
-                    <h4 className="text-lg font-black uppercase tracking-tight text-slate-900">General Welfare</h4>
-                    <p className="text-xs text-slate-500 mt-2 font-medium">Flexible funding for the most urgent community needs.</p>
-                  </div>
-                  
-                  {campaigns.map(c => (
-                    <div 
-                      key={c.id}
-                      onClick={() => setSelectedTarget({id: c.id, name: c.name, type: 'Campaign'})}
-                      className={`p-8 rounded-[2.5rem] border-2 cursor-pointer transition-all ${selectedTarget?.id === c.id ? 'border-orange-500 bg-orange-50 shadow-xl' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
-                    >
-                      <i className="fas fa-bullhorn text-3xl mb-6 text-orange-600"></i>
-                      <h4 className="text-lg font-black uppercase tracking-tight text-slate-900 truncate">{c.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Active Campaign</p>
-                    </div>
-                  ))}
+                    <div className="mb-4 text-3xl text-orange-500"><i className="fas fa-globe" /></div>
+                    <h4 className="text-lg font-black uppercase tracking-tight text-slate-900">General welfare</h4>
+                    <p className="mt-2 text-sm text-slate-500">Flexible support for urgent community needs.</p>
+                  </button>
 
-                  {programs.map(p => (
-                    <div 
-                      key={p.id}
-                      onClick={() => setSelectedTarget({id: p.id, name: p.name, type: 'Program'})}
-                      className={`p-8 rounded-[2.5rem] border-2 cursor-pointer transition-all ${selectedTarget?.id === p.id ? 'border-orange-500 bg-orange-50 shadow-xl' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
+                  {campaigns.length > 0 ? campaigns.map(campaign => (
+                    <button
+                      key={campaign.id}
+                      type="button"
+                      onClick={() => setSelectedTarget({ id: campaign.id, name: campaign.name, type: 'Campaign' })}
+                      className={`rounded-[2rem] border-2 p-6 text-left transition ${selectedTarget?.id === campaign.id ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
                     >
-                      <i className="fas fa-heart-pulse text-3xl mb-6 text-orange-600"></i>
-                      <h4 className="text-lg font-black uppercase tracking-tight text-slate-900 truncate">{p.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Core Program</p>
+                      <div className="mb-4 text-3xl text-orange-500"><i className="fas fa-bullhorn" /></div>
+                      <h4 className="text-lg font-black uppercase tracking-tight text-slate-900">{campaign.name}</h4>
+                      <p className="mt-2 text-sm text-slate-500 line-clamp-2">{campaign.purpose}</p>
+                    </button>
+                  )) : (
+                    <div className="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 md:col-span-2">
+                      No campaign has been published yet. General welfare donations are available now.
                     </div>
-                  ))}
+                  )}
                 </div>
-                <button 
+                <button
+                  type="button"
                   disabled={!selectedTarget}
                   onClick={() => setStep(2)}
-                  className="w-full py-6 bg-slate-900 text-white font-black rounded-3xl uppercase tracking-widest text-xs hover:bg-black disabled:opacity-50 transition-all shadow-xl"
+                  className="w-full rounded-2xl bg-slate-900 px-6 py-5 text-xs font-black uppercase tracking-[0.25em] text-white transition hover:bg-black disabled:opacity-50"
                 >
-                  Continue to Identity & Amount
+                  Continue
                 </button>
               </div>
             )}
 
             {step === 2 && (
-              <div className="animate-in fade-in slide-in-from-right-4 space-y-10">
-                <div className="flex items-center justify-between">
-                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Gift Amount</h3>
-                   <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest bg-orange-50 px-3 py-1 rounded-lg">Target: {selectedTarget?.name}</span>
+              <div className="space-y-8">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Amount & identity</h3>
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-orange-600">
+                    Target: {selectedTarget?.name}
+                  </span>
                 </div>
-                
+
                 {!user && (
-                   <div className="grid md:grid-cols-2 gap-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
-                      <div className="md:col-span-2 flex items-center justify-between">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Donor Information (For automated receipting)</p>
-                         <Link to="/login" className="text-[9px] font-black text-orange-600 uppercase underline">Already a member? Log In</Link>
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Legal Name</label>
-                        <input 
-                           className="w-full bg-white border border-slate-100 rounded-xl px-5 py-3 outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
-                           placeholder="e.g. John Doe"
-                           value={guestName}
-                           onChange={e => setGuestName(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Email Address</label>
-                        <input 
-                           type="email"
-                           className="w-full bg-white border border-slate-100 rounded-xl px-5 py-3 outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
-                           placeholder="email@example.com"
-                           value={guestEmail}
-                           onChange={e => setGuestEmail(e.target.value)}
-                        />
-                      </div>
-                   </div>
+                  <div className="grid gap-5 rounded-[2rem] border border-slate-100 bg-slate-50 p-6 md:grid-cols-2">
+                    <div className="md:col-span-2 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                      Guest contributor details
+                    </div>
+                    <input
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      placeholder="Enter your full name"
+                      value={guestName}
+                      onChange={e => setGuestName(e.target.value)}
+                    />
+                    <input
+                      type="email"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      placeholder="Enter your email address"
+                      value={guestEmail}
+                      onChange={e => setGuestEmail(e.target.value)}
+                    />
+                  </div>
                 )}
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[25, 50, 100, 500].map(val => (
-                    <button 
-                      key={val}
-                      onClick={() => setAmount(val)}
-                      className={`py-6 rounded-2xl font-black text-lg transition-all ${amount === val ? 'bg-orange-600 text-white shadow-xl scale-105' : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-orange-300'}`}
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  {presetAmounts.map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setAmount(value)}
+                      className={`rounded-2xl border px-4 py-5 text-lg font-black transition ${amount === value ? 'border-orange-500 bg-orange-600 text-white' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-orange-300'}`}
                     >
-                      ${val}
+                      ${value}
                     </button>
                   ))}
                 </div>
-                <div className="relative">
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Or enter custom amount ($)</label>
-                   <input 
-                      type="number" 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-3xl px-8 py-6 outline-none focus:ring-2 focus:ring-orange-500 font-black text-3xl text-slate-900" 
-                      placeholder="0.00"
-                      value={amount || ''}
-                      onChange={e => setAmount(Number(e.target.value))}
-                   />
+
+                <div>
+                  <label className="mb-3 block text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Custom amount</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-6 py-5 text-2xl font-black text-slate-900 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="0.00"
+                    value={amount || ''}
+                    onChange={e => setAmount(Number(e.target.value))}
+                  />
                 </div>
+
                 <div className="flex gap-4">
-                  <button onClick={() => setStep(1)} className="flex-grow py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase text-xs tracking-widest">Back</button>
-                  <button 
+                  <button type="button" onClick={() => setStep(1)} className="flex-1 rounded-2xl bg-slate-100 px-6 py-5 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+                    Back
+                  </button>
+                  <button
+                    type="button"
                     disabled={amount <= 0 || (!user && (!guestName || !guestEmail))}
                     onClick={() => setStep(3)}
-                    className="flex-[2] py-6 bg-slate-900 text-white font-black rounded-3xl uppercase text-xs tracking-widest hover:bg-black disabled:opacity-50 shadow-xl"
+                    className="flex-[2] rounded-2xl bg-slate-900 px-6 py-5 text-xs font-black uppercase tracking-[0.25em] text-white transition hover:bg-black disabled:opacity-50"
                   >
-                    Select Payment Method
+                    Continue to payment
                   </button>
                 </div>
               </div>
             )}
 
             {step === 3 && (
-              <div className="animate-in fade-in slide-in-from-right-4 space-y-10">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">How will you give?</h3>
+              <div className="space-y-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Choose payment method</h3>
+
                 <div className="grid gap-4">
-                  <div 
-                    onClick={() => setPaymentMethod('MTN')}
-                    className={`flex items-center justify-between p-6 rounded-3xl border-2 cursor-pointer transition-all ${paymentMethod === 'MTN' ? 'border-yellow-400 bg-yellow-50 shadow-lg' : 'border-slate-100 bg-slate-50'}`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 bg-yellow-400 rounded-2xl flex items-center justify-center font-black text-2xl text-white">M</div>
-                      <div>
-                        <h4 className="font-black text-slate-900 uppercase text-sm">MTN Mobile Money</h4>
-                        <p className="text-[10px] text-slate-500 font-medium">Verified MoMo Gateway (UG)</p>
+                  {[
+                    { value: 'MTN', label: 'MTN Mobile Money', hint: 'Verified mobile wallet', icon: 'M', badge: 'bg-yellow-400' },
+                    { value: 'AIRTEL', label: 'Airtel Money', hint: 'Verified mobile wallet', icon: 'A', badge: 'bg-red-600' },
+                    { value: 'CARD', label: 'International card', hint: 'Visa, Mastercard, Amex', icon: 'C', badge: 'bg-slate-900' },
+                  ].map(method => (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(method.value as PaymentMethod)}
+                      className={`flex items-center justify-between rounded-[2rem] border-2 p-5 text-left transition ${paymentMethod === method.value ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-slate-50 hover:border-orange-200'}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-black text-white ${method.badge}`}>{method.icon}</div>
+                        <div>
+                          <p className="font-black text-slate-900">{method.label}</p>
+                          <p className="text-xs text-slate-500">{method.hint}</p>
+                        </div>
                       </div>
-                    </div>
-                    {paymentMethod === 'MTN' && <i className="fas fa-check-circle text-yellow-500 text-xl"></i>}
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('AIRTEL')}
-                    className={`flex items-center justify-between p-6 rounded-3xl border-2 cursor-pointer transition-all ${paymentMethod === 'AIRTEL' ? 'border-red-500 bg-red-50 shadow-lg' : 'border-slate-100 bg-slate-50'}`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center font-black text-2xl text-white">A</div>
-                      <div>
-                        <h4 className="font-black text-slate-900 uppercase text-sm">Airtel Money</h4>
-                        <p className="text-[10px] text-slate-500 font-medium">Verified Airtel Gateway (UG)</p>
-                      </div>
-                    </div>
-                    {paymentMethod === 'AIRTEL' && <i className="fas fa-check-circle text-red-500 text-xl"></i>}
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('CARD')}
-                    className={`flex items-center justify-between p-6 rounded-3xl border-2 cursor-pointer transition-all ${paymentMethod === 'CARD' ? 'border-slate-900 bg-slate-900 text-white shadow-lg' : 'border-slate-100 bg-slate-50'}`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-2xl"><i className="fas fa-credit-card"></i></div>
-                      <div>
-                        <h4 className="font-black uppercase text-sm">International Card</h4>
-                        <p className="text-[10px] opacity-60 font-medium">Visa / Mastercard / Amex</p>
-                      </div>
-                    </div>
-                    {paymentMethod === 'CARD' && <i className="fas fa-check-circle text-white text-xl"></i>}
-                  </div>
+                      {paymentMethod === method.value && <i className="fas fa-check-circle text-orange-500" />}
+                    </button>
+                  ))}
                 </div>
 
                 {paymentMethod && paymentMethod !== 'CARD' && (
-                  <div className="animate-in slide-in-from-top-4">
-                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">UG Registered Number</label>
-                     <div className="relative">
-                        <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">+256</span>
-                        <input 
-                           type="tel" 
-                           placeholder="770 000 000"
-                           className="w-full bg-slate-50 border border-slate-100 rounded-3xl pl-20 pr-8 py-6 outline-none focus:ring-2 focus:ring-orange-500 font-black text-2xl"
-                           value={phone}
-                           onChange={e => setPhone(e.target.value)}
-                        />
-                     </div>
+                  <div>
+                    <label className="mb-3 block text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Mobile number</label>
+                    <input
+                      type="tel"
+                      className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-6 py-5 text-xl font-black text-slate-900 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      placeholder="Phone number"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                    />
                   </div>
                 )}
 
                 <div className="flex gap-4">
-                  <button onClick={() => setStep(2)} className="flex-grow py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase text-xs tracking-widest">Back</button>
-                  <button 
-                    disabled={!paymentMethod || (paymentMethod !== 'CARD' && phone.length < 9)}
+                  <button type="button" onClick={() => setStep(2)} className="flex-1 rounded-2xl bg-slate-100 px-6 py-5 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!paymentMethod || (paymentMethod !== 'CARD' && phone.replace(/\D/g, '').length < 9)}
                     onClick={handleProcess}
-                    className={`flex-[2] py-6 text-white font-black rounded-3xl uppercase text-xs tracking-widest transition-all shadow-xl disabled:opacity-50 ${paymentMethod === 'MTN' ? 'bg-yellow-500' : paymentMethod === 'AIRTEL' ? 'bg-red-600' : 'bg-slate-900'}`}
+                    className="flex-[2] rounded-2xl bg-orange-600 px-6 py-5 text-xs font-black uppercase tracking-[0.25em] text-white transition hover:bg-orange-700 disabled:opacity-50"
                   >
-                    Process Secure Contribution
+                    Complete donation
                   </button>
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        <p className="mt-12 text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] leading-relaxed">
-          Naanghirisa Organisation is a registered CBO.<br/>
-          Secure processing ensured by 256-bit SSL encryption.
-        </p>
       </div>
     </div>
   );

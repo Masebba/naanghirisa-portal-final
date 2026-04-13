@@ -47,12 +47,11 @@ const programs = [
 const Home: React.FC = () => {
   return (
     <div className="animate-in fade-in duration-700">
-
       {/* ================= HERO SECTION ================= */}
       <section
         className="relative min-h-[70vh] md:min-h-[85vh] flex items-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(88,0,0,0.85), rgba(88,0,0,0.85)), url(${heroBg})`,
+          backgroundImage: `linear-gradient(hsla(240, 33%, 7%, 0.88), hsla(240, 4%, 11%, 0.83)), url(${heroBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -105,7 +104,11 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
           <div className="grid grid-cols-2 gap-6">
             <img src={snap1} alt="Community" className="rounded-xl shadow-xl" />
-            <img src={snap2} alt="Education" className="rounded-xl shadow-3xl mt-10" />
+            <img
+              src={snap2}
+              alt="Education"
+              className="rounded-xl shadow-3xl mt-10"
+            />
           </div>
 
           <div className="text-center md:text-left">
@@ -116,14 +119,17 @@ const Home: React.FC = () => {
               Our Dedication to Local Impact
             </h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8 italic">
-              Poverty, early marriage, teenage pregnancies, gender based violence, HIV and AIDS, and low participation
-              in post-primary education are some of the situations attributed to Butaleja District.
-              Adolescent girls, in particular, face multiple vulnerabilities.
+              Poverty, early marriage, teenage pregnancies, gender based
+              violence, HIV and AIDS, and low participation in post-primary
+              education are some of the situations attributed to Butaleja
+              District. Adolescent girls, in particular, face multiple
+              vulnerabilities.
             </p>
             <p className="text-slate-600 text-lg leading-relaxed mb-8 italic">
-              "We believe in taking consistent and progressive steps. We believe each one of us has a small,
-              vital role to play in building our community. The purpose of this organisation is to champon,
-              promote and protect the interests of Butaleja community together."
+              "We believe in taking consistent and progressive steps. We believe
+              each one of us has a small, vital role to play in building our
+              community. The purpose of this organisation is to champon, promote
+              and protect the interests of Butaleja community together."
             </p>
             <Link
               to="/about"
@@ -183,28 +189,45 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-20">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-4xl font-black mb-6 uppercase tracking-tighter" style={{ color: COLORS.primary }}>Vision for Tomorrow</h2>
+            <h2
+              className="text-4xl font-black mb-6 uppercase tracking-tighter"
+              style={{ color: COLORS.primary }}
+            >
+              Vision for Tomorrow
+            </h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8">
-              Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.
+              Naanghirisa is constantly looking ahead. Our dynamic programming
+              model allows us to address emerging challenges.
             </p>
             <div className="grid gap-2">
               {[
-                { title: 'Digital Learning Hubs', icon: 'fa-laptop-code' },
-                { title: 'Youth Entrepreneurship Fund', icon: 'fa-rocket' },
-                { title: 'Mobile Health Clinics', icon: 'fa-ambulance' },
-                { title: 'Inspire Academy', icon: 'fa-school' },
+                { title: "Digital Learning Hubs", icon: "fa-laptop-code" },
+                { title: "Youth Entrepreneurship Fund", icon: "fa-rocket" },
+                { title: "Mobile Health Clinics", icon: "fa-ambulance" },
+                { title: "Inspire Academy", icon: "fa-school" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-5 p-2 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-orange-200 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform" style={{ color: COLORS.secondary }}>
+                <div
+                  key={i}
+                  className="flex items-center gap-5 p-2 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-orange-200 transition-colors"
+                >
+                  <div
+                    className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform"
+                    style={{ color: COLORS.secondary }}
+                  >
                     <i className={`fas ${item.icon}`}></i>
                   </div>
-                  <span className="font-black text-slate-800 uppercase text-sm tracking-tight">{item.title}</span>
+                  <span className="font-black text-slate-800 uppercase text-sm tracking-tight">
+                    {item.title}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
           <div className="relative">
-            <div className="relative -inset-4 rounded-[4rem] opacity-10 transform rotate-2" style={{ backgroundColor: COLORS.secondary }}></div>
+            <div
+              className="relative -inset-4 rounded-[4rem] opacity-10 transform rotate-2"
+              style={{ backgroundColor: COLORS.secondary }}
+            ></div>
             <img
               src={vision}
               alt="Future Vision"
@@ -213,33 +236,63 @@ const Home: React.FC = () => {
             <div className="absolute -bottom-8 z-10 -right-8 p-10 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl max-w-xs border-4 border-white">
               <p className="text-orange-500 font-black text-3xl mb-2">2026</p>
               <p className="text-slate-300 text-xs font-bold uppercase tracking-widest leading-relaxed">
-                Our goal is to reach 5,000 community members through integrated systems.
+                Our goal is to reach 5,000 community members through integrated
+                systems.
               </p>
             </div>
           </div>
         </div>
       </div>
       {/* Volunteer CTA */}
-      <section className="py-20 relative overflow-hidden text-white" style={{ backgroundColor: COLORS.primary }}>
+      <section
+        className="py-20 relative overflow-hidden text-white"
+        style={{ backgroundColor: COLORS.primary }}
+      >
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 hidden lg:block">
           <i className="fas fa-heart text-[30rem] rotate-12"></i>
         </div>
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 md:gap-16 items-center relative z-10">
           <div className="text-center lg:text-left">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">Join Our Volunteer Team</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+              Join Our Volunteer Team
+            </h2>
             <p className="text-lg md:text-xl text-red-100 mb-10 leading-relaxed">
-              Be part of the change. Our volunteers help us deliver care and empowerment directly to those who need it.
+              Be part of the change. Our volunteers help us deliver care and
+              empowerment directly to those who need it.
             </p>
-            <Link to="/volunteer" className="inline-block px-12 py-4 bg-orange-500 text-white font-black rounded-full shadow-xl hover:bg-orange-600 transition-all">
+            <Link
+              to="/volunteer"
+              className="inline-block px-12 py-4 bg-orange-500 text-white font-black rounded-full shadow-xl hover:bg-orange-600 transition-all"
+            >
               APPLY NOW
             </Link>
           </div>
           <div className="bg-white/10 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-white/20">
-            <h4 className="text-xl md:text-2xl font-black mb-6 text-orange-400 uppercase tracking-tighter">Fast-Track Interest</h4>
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Thanks! We'll contact you."); }}>
-              <input type="text" required placeholder="Name" className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400" />
-              <input type="email" required placeholder="Email" className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400" />
-              <button className="w-full py-4 bg-orange-600 font-black rounded-2xl hover:bg-orange-700 shadow-xl transition-colors uppercase text-xs tracking-widest">SUBMIT</button>
+            <h4 className="text-xl md:text-2xl font-black mb-6 text-orange-400 uppercase tracking-tighter">
+              Fast-Track Interest
+            </h4>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert("Thanks! We'll contact you.");
+              }}
+            >
+              <input
+                type="text"
+                required
+                placeholder="Enter your full name"
+                className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400"
+              />
+              <input
+                type="email"
+                required
+                placeholder="Enter your email address"
+                className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400"
+              />
+              <button className="w-full py-4 bg-orange-600 font-black rounded-2xl hover:bg-orange-700 shadow-xl transition-colors uppercase text-xs tracking-widest">
+                SUBMIT
+              </button>
             </form>
           </div>
         </div>

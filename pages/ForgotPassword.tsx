@@ -79,7 +79,7 @@ const ForgotPassword: React.FC = () => {
                      required
                      type="text" 
                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
-                     placeholder="e.g. admin@naanghirisa.org"
+                     placeholder="Email address or phone number"
                      value={identifier}
                      onChange={e => setIdentifier(e.target.value)}
                    />
@@ -107,7 +107,7 @@ const ForgotPassword: React.FC = () => {
                      required
                      type="password" 
                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
-                     placeholder="Minimum 6 characters"
+                     placeholder="Create a new password"
                      value={newPassword}
                      onChange={e => setNewPassword(e.target.value)}
                    />

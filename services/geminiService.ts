@@ -1,24 +1,24 @@
-
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize GoogleGenAI with API key directly from environment variable
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export async function summarizeImpact(programData: string) {
   try {
-    // Generate content using the recommended model and passing model name + prompt directly
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Summarize the impact and provide a call to action based on this program data: ${programData}`,
-      config: {
-        temperature: 0.7,
-        topP: 0.95,
-      }
-    });
-    // Access the text property directly from the response object
-    return response.text;
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    return "Could not generate summary at this time.";
+    const parsed = JSON.parse(programData);
+    const programs = Array.isArray(parsed) ? parsed : [];
+
+    if (programs.length === 0) {
+      return 'No programs have been added yet. Once activities are created, this section will generate a concise operational summary.';
+    }
+
+    const names = programs
+      .slice(0, 3)
+      .map((program: any) => program?.name)
+      .filter(Boolean)
+      .join(', ');
+
+    const running = programs.filter((program: any) => program?.status === 'Running').length;
+    const planned = programs.filter((program: any) => program?.status === 'Planned').length;
+    const completed = programs.filter((program: any) => program?.status === 'Completed').length;
+
+    return `Programs tracked: ${names}. Active initiatives: ${running}. Planned initiatives: ${planned}. Completed initiatives: ${completed}. Focus on consistent delivery, transparent reporting, and measurable child and community outcomes.`;
+  } catch {
+    return 'A concise summary could not be generated from the provided data.';
   }
 }

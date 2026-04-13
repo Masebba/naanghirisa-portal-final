@@ -320,7 +320,7 @@ const AccountabilityManager: React.FC = () => {
               <div className="space-y-6">
                  <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Purpose of Expenditure</label>
-                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold outline-none focus:ring-2 focus:ring-orange-500" value={newReq.title} onChange={e => setNewReq({...newReq, title: e.target.value})} placeholder="e.g. Scholastic Materials for Butaleja Primary" />
+                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold outline-none focus:ring-2 focus:ring-orange-500" value={newReq.title} onChange={e => setNewReq({...newReq, title: e.target.value})} placeholder="Request title" />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -369,7 +369,7 @@ const AccountabilityManager: React.FC = () => {
               <div className="space-y-6">
                  <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Source / Entity Name</label>
-                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold outline-none focus:ring-2 focus:ring-emerald-500" value={newIncome.title} onChange={e => setNewIncome({...newIncome, title: e.target.value})} placeholder="e.g. Government Grant, Local Partner Contribution" />
+                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold outline-none focus:ring-2 focus:ring-emerald-500" value={newIncome.title} onChange={e => setNewIncome({...newIncome, title: e.target.value})} placeholder="Income source" />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div>

@@ -110,7 +110,7 @@ const NewsDetail: React.FC = () => {
                <h4 className="text-lg font-black mb-6 uppercase tracking-widest">Newsletter</h4>
                <p className="text-slate-400 text-xs mb-8 leading-relaxed">Get the latest impact stories and news directly to your inbox every month.</p>
                <div className="space-y-4">
-                  <input type="email" placeholder="Email Address" className="w-full bg-white/5 border border-white/20 rounded-xl px-5 py-4 outline-none focus:border-orange-500 text-sm" />
+                  <input type="email" placeholder="Enter your email address" className="w-full bg-white/5 border border-white/20 rounded-xl px-5 py-4 outline-none focus:border-orange-500 text-sm" />
                   <button className="w-full py-4 bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-orange-700 transition-all">
                     Subscribe
                   </button>

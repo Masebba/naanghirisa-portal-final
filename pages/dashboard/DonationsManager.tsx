@@ -399,7 +399,7 @@ const DonationsManager: React.FC = () => {
                                      <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-400">+256</span>
                                      <input 
                                        type="tel"
-                                       placeholder="770000000"
+                                       placeholder="Phone number"
                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-20 pr-6 py-5 outline-none focus:ring-2 focus:ring-orange-500 font-black text-lg"
                                        value={phoneNumber}
                                        onChange={e => setPhoneNumber(e.target.value)}
@@ -439,7 +439,7 @@ const DonationsManager: React.FC = () => {
            <div className="bg-white w-full max-w-xl rounded-[3rem] p-10 shadow-2xl animate-in zoom-in-95">
               <div className="flex justify-between items-center mb-8"><h3 className="text-2xl font-black uppercase tracking-tighter">Manual Ledger Entry</h3><button onClick={() => setShowLogModal(false)} className="w-10 h-10 rounded-full hover:bg-slate-100 transition-colors"><i className="fas fa-times"></i></button></div>
               <div className="space-y-6">
-                 <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Donor Name</label><input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold" value={newDonation.donorName} onChange={e => setNewDonation({...newDonation, donorName: e.target.value})} placeholder="Full name or 'Anonymous'" /></div>
+                 <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Donor Name</label><input className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold" value={newDonation.donorName} onChange={e => setNewDonation({...newDonation, donorName: e.target.value})} placeholder="Enter donor name" /></div>
                  <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Amount ($)</label><input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold" value={newDonation.amount || ''} onChange={e => setNewDonation({...newDonation, amount: Number(e.target.value)})} /></div>
                     <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Campaign</label><select className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 font-bold" value={newDonation.campaignId} onChange={e => setNewDonation({...newDonation, campaignId: e.target.value})}><option value="General">General Fund</option>{activeCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
