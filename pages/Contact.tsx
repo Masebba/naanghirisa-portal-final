@@ -27,7 +27,7 @@ const Contact: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary }}>
+      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary, backgroundImage: content.contactHeroImage ? `linear-gradient(rgba(88,0,0,0.82), rgba(88,0,0,0.82)), url(${content.contactHeroImage})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}>
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-5xl font-black mb-4 uppercase tracking-tighter">{content.contactHeroTitle || 'Get in Touch'}</h1>
           <p className="text-xl opacity-90 max-w-2xl mx-auto font-medium">

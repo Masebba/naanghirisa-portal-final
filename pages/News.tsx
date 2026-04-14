@@ -1,7 +1,7 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { mockNews } from '../services/mockData';
+import { getPageContent, mockNews, subscribeStoreUpdates } from '../services/mockData';
 import { authService } from '../services/authService';
 import { COLORS } from '../constants';
 import { UserRole } from '../types';
@@ -10,6 +10,9 @@ const News: React.FC = () => {
   const currentUser = authService.getCurrentUser();
   const isAdmin = !!currentUser && [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(currentUser.role);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pageContent, setPageContent] = useState(getPageContent());
+
+  useEffect(() => subscribeStoreUpdates(() => setPageContent(getPageContent())), []);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [visibleCount, setVisibleCount] = useState(6);
 
@@ -43,7 +46,7 @@ const News: React.FC = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
-      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary }}>
+      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary, backgroundImage: pageContent.newsHeroImage ? `linear-gradient(rgba(88,0,0,0.82), rgba(88,0,0,0.82)), url(${pageContent.newsHeroImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-5xl font-black mb-4 uppercase tracking-tighter">News & Announcements</h1>
           <p className="text-xl opacity-90 max-w-2xl mx-auto font-medium">

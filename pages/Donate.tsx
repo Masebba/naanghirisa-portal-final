@@ -102,11 +102,11 @@ const Donate: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-16">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl" style={{ color: COLORS.primary }}>
+        <div className="mb-12 text-center rounded-[2.5rem] px-8 py-14 text-white" style={{ backgroundColor: COLORS.primary, backgroundImage: content.donateHeroImage ? `linear-gradient(rgba(88,0,0,0.82), rgba(88,0,0,0.82)), url(${content.donateHeroImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">
             {content.donateHeroTitle || 'Change a life today'}
           </h1>
-          <p className="mt-4 text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+          <p className="mt-4 text-xs font-black uppercase tracking-[0.25em] text-white/80">
             Step {step} of 3
           </p>
         </div>

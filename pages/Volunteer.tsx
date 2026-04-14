@@ -23,7 +23,7 @@ const Volunteer: React.FC = () => {
 
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden bg-slate-950 py-24 text-white">
+      <section className="relative overflow-hidden bg-slate-950 py-24 text-white" style={{ backgroundImage: content.volunteerHeroImage ? `linear-gradient(rgba(15,23,42,0.82), rgba(15,23,42,0.82)), url(${content.volunteerHeroImage})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}>
         <div className="absolute inset-0 z-0 opacity-20">
           <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1600" className="h-full w-full object-cover" alt="Volunteer" />
         </div>

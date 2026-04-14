@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
             ))}
             <Link
               to="/login"
-              className="px-5 py-3 text-[10px] font-black text-white rounded-lg shadow-md hover:scale-105 transition-all"
+              className="px-4 py-2 text-[10px] font-black text-white rounded-lg shadow-md hover:scale-105 transition-all"
               style={{ backgroundColor: COLORS.primary }}
             >
               DONOR PORTAL
@@ -139,8 +139,7 @@ const Footer: React.FC = () => {
                 <a
                   key={i}
                   href="#"
-                  className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center
-                hover:scale-110 hover:rotate-3 transition-all`}
+                  className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center hover:scale-110 hover:rotate-3 transition-all`}
                 >
                   <i className={`fab ${s.icon} text-sm`}></i>
                 </a>
@@ -184,7 +183,7 @@ const Footer: React.FC = () => {
                 type="email"
                 required
                 placeholder="Enter your email address"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-orange-500"
               />
               <button className="w-full py-3 bg-orange-600 font-black rounded-xl hover:bg-orange-700 transition-all">
                 SUBSCRIBE

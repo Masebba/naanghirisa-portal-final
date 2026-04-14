@@ -8,6 +8,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,46 +32,73 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[45%_55%] bg-[#fff7ed]">
-      <div className="hidden lg:flex flex-col justify-center p-12 text-white" style={{ backgroundColor: COLORS.primary }}>
+    <div className="min-h-screen grid lg:grid-cols-[42%_58%] bg-[#fff7ed]">
+      <div className="hidden lg:flex flex-col justify-center p-10 text-white" style={{ backgroundColor: COLORS.primary }}>
         <div className="max-w-md mx-auto">
-          <img src={logo} alt={BRAND.fullName} className="h-24 w-auto mb-10 bg-white/10 rounded-3xl p-4" />
-          <h1 className="text-4xl font-black uppercase tracking-tighter leading-tight mb-6">Secure portal access</h1>
-          <p className="text-red-100 text-lg leading-relaxed mb-10">
+          <img src={logo} alt={BRAND.fullName} className="h-20 w-auto mb-8 bg-white/10 rounded-lg p-3" />
+          <h1 className="text-4xl font-black uppercase tracking-tighter leading-tight mb-5">Secure portal access</h1>
+          <p className="text-red-100 text-base leading-relaxed mb-8">
             Manage programmes, transparency, donations, volunteer activity, and organisational content from one secure place.
           </p>
-          <div className="grid gap-4 text-sm font-bold text-red-100">
-            <div className="flex items-center gap-3"><i className="fas fa-shield-halved"></i> Role-based access control</div>
-            <div className="flex items-center gap-3"><i className="fas fa-database"></i> Firestore-backed records</div>
-            <div className="flex items-center gap-3"><i className="fas fa-sitemap"></i> Full site content management</div>
+          <div className="grid gap-3 text-sm font-bold text-red-100">
+            <div className="flex items-center gap-3"><i className="fas fa-shield-halved" /> Role-based access control</div>
+            <div className="flex items-center gap-3"><i className="fas fa-database" /> Firestore-backed records</div>
+            <div className="flex items-center gap-3"><i className="fas fa-sitemap" /> Full site content management</div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-lg">
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-orange-100">
-            <div className="text-center mb-10">
-              <img src={logo} alt="Logo" className="h-20 w-auto mx-auto mb-6" />
+      <div className="flex items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 md:p-8 shadow-2xl border border-orange-100">
+            <div className="text-center mb-8">
+              <img src={logo} alt="Logo" className="h-16 w-auto mx-auto mb-4" />
               <h2 className="text-3xl font-black uppercase tracking-tighter" style={{ color: COLORS.primary }}>Sign in</h2>
               <p className="text-slate-500 text-sm mt-2">Use your Firebase-authenticated account.</p>
             </div>
 
-            {error && <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">{error}</div>}
+            {error && <div className="mb-5 rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-bold text-red-600">{error}</div>}
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <input type="email" required placeholder="Email address" value={identifier} onChange={e => setIdentifier(e.target.value)} className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 outline-none focus:ring-2 focus:ring-orange-200" />
-              <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 outline-none focus:ring-2 focus:ring-orange-200" />
-              <button type="submit" disabled={isLoading} className="w-full rounded-2xl py-4 font-black text-white transition disabled:opacity-60" style={{ backgroundColor: COLORS.primary }}>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <input
+                type="email"
+                required
+                placeholder="Email address"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+                className="w-full rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-200"
+              />
+
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-orange-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(show => !show)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm px-2 py-1 text-slate-400 transition hover:text-slate-700"
+                >
+                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                </button>
+              </div>
+
+              <button type="submit" disabled={isLoading} className="w-full rounded-lg py-3 font-black text-white transition disabled:opacity-60" style={{ backgroundColor: COLORS.primary }}>
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="mt-8 text-center text-xs text-slate-400 font-bold uppercase tracking-widest">
-              Need account help? Contact a Super Admin.
+            <div className="mt-6 flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-widest">
+              <Link to="/forgot-password" className="hover:text-orange-600">Forgot password</Link>
+              <span>Need account help? Contact a Super Admin.</span>
             </div>
           </div>
-          <div className="mt-6 text-center"><Link to="/" className="text-sm font-bold text-slate-500 hover:text-orange-600">Back to website</Link></div>
+          <div className="mt-4 text-center"><Link to="/" className="text-sm font-bold text-slate-500 hover:text-orange-600">Back to website</Link></div>
         </div>
       </div>
     </div>

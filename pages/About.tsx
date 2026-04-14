@@ -71,6 +71,20 @@ const fallbackLeaders = [
 const About: React.FC = () => {
   const [content, setContent] = useState(getPageContent());
   useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
+  const timeline = flashbacks.map(item => ({
+    ...item,
+    image:
+      item.year === 2016 ? content.aboutFlashback2016 || item.image :
+      item.year === 2017 ? content.aboutFlashback2017 || item.image :
+      item.year === 2018 ? content.aboutFlashback2018 || item.image :
+      item.year === 2019 ? content.aboutFlashback2019 || item.image :
+      item.year === 2020 ? content.aboutFlashback2020 || item.image :
+      item.year === 2021 ? content.aboutFlashback2021 || item.image :
+      item.year === 2022 ? content.aboutFlashback2022 || item.image :
+      item.year === 2023 ? content.aboutFlashback2023 || item.image :
+      item.year === 2024 ? content.aboutFlashback2024 || item.image :
+      content.aboutFlashback2025 || item.image,
+  }));
   return (
     <div className="bg-white">
 
@@ -78,7 +92,7 @@ const About: React.FC = () => {
       <section
         className="py-28 text-center text-white relative"
         style={{
-          backgroundImage: `linear-gradient(rgba(90,0,0,0.85), rgba(90,0,0,0.85)), url(${headerBg})`,
+          backgroundImage: `linear-gradient(rgba(90,0,0,0.85), rgba(90,0,0,0.85)), url(${content.aboutHeaderImage || headerBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -129,7 +143,7 @@ const About: React.FC = () => {
           </div>
 
           <img
-            src={formationImg}
+            src={content.aboutFormationImage || formationImg}
             alt="Formation"
             className="rounded-2xl shadow-xl border-4 border-white"
           />
@@ -188,7 +202,10 @@ const About: React.FC = () => {
         {/* Achievements Section */}
         <div className="mb-10 text-justify">
           <div className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100">
-            <h3 className="text-2xl font-black mb-6" style={{ color: COLORS.primary }}>Butaleja in public domain</h3>
+            <h3 className="text-2xl font-black mb-6" style={{ color: COLORS.primary }}>{content.aboutPublicDomainTitle || 'Butaleja in public domain'}</h3>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              {content.aboutPublicDomainText || 'Butaleja district faces severe challenges in education and child welfare. Naanghirisa responds through practical, accountable action.'}
+            </p>
             <p className="text-slate-600 mb-6 leading-relaxed">
               Butaleja district has the unenviable distinction of having the youngest grandmother ever recorded in
               Uganda aged 27 years. As the same time, school drop-out has increased to 70% in upper primary.
@@ -235,7 +252,7 @@ const About: React.FC = () => {
             <div className="relative pl-12 space-y-6">
               {/* Vertical line */}
               <div className="absolute left-6 top-0 bottom-0 w-[3px] bg-orange-200"></div>
-              {flashbacks.map((item, index) => (
+              {timeline.map((item, index) => (
                 <div key={index} className="relative">
 
                   {/* Timeline dot — perfectly centered on the line */}

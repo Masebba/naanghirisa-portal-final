@@ -15,6 +15,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
+import { createAuthUser } from "./authApi";
 import {
   Campaign,
   Donation,
@@ -47,11 +48,26 @@ const initialPageContent = {
   aboutStory:
     "Naanghirisa was founded to respond to the gaps facing vulnerable children and households in the community.",
   aboutJourneyImage: "",
+  aboutHeaderImage: "",
+  aboutFormationImage: "",
+  aboutFlashback2016: "",
+  aboutFlashback2017: "",
+  aboutFlashback2018: "",
+  aboutFlashback2019: "",
+  aboutFlashback2020: "",
+  aboutFlashback2021: "",
+  aboutFlashback2022: "",
+  aboutFlashback2023: "",
+  aboutFlashback2024: "",
+  aboutFlashback2025: "",
   programSpendPercentage: 0,
   impactChildrenCount: 0,
   totalFundsRaised: 0,
   transparencyLockMessage:
     "Detailed financial reports and donor-only records are available after secure sign-in.",
+  transparencyIntro: "At Naanghirisa, transparency is a core value.",
+  transparencyArchivesText: "Approved financial records and archived accountability reports are available to trusted stakeholders.",
+  transparencyHeroImage: "",
   contactEmailSupport: "info@naanghirisa.org",
   contactEmailEnquiry: "support@naanghirisa.org",
   contactPhone1: "+256 700 000000",
@@ -59,23 +75,40 @@ const initialPageContent = {
   contactAddress: "Plot 12, Link Road, Butaleja Town Council, Uganda",
   contactHeroTitle: "Get in Touch",
   contactHeroDescription: "Have questions about our programs or want to partner with us? Reach out today.",
+  contactHeroImage: "",
   contactIntro: "We are here to help. Whether you are a donor, a volunteer, or a community member in need, our team is ready to listen and support.",
   volunteerHeroTitle: "Volunteer with Naanghirisa",
   volunteerHeroDescription: "Your skills and passion can help transform lives in Butaleja.",
+  volunteerHeroImage: "",
   volunteerIntro: "Tell us a bit about yourself and your motivations.",
   donateHeroTitle: "Change a life today",
   donateHeroDescription: "Support general welfare or a specific campaign directly from the portal.",
+  donateHeroImage: "",
+  programsHeroImage: "",
+  campaignsHeroImage: "",
+  newsHeroImage: "",
   homeHeroTitle: BRAND.heroTitle,
   homeHeroDescription: BRAND.heroDescription,
+  homeHeroImage: "",
+  homeHeroSideImage: "",
   homeWhoWeAreTitle: "Our Dedication to Local Impact",
   homeWhoWeAreText: "Poverty, early marriage, teenage pregnancies, gender based violence, HIV and AIDS, and low participation in post-primary education are some of the situations attributed to Butaleja District.",
+  homeWhatWeDoTitle: "What We Do",
+  homeWhatWeDoText: "Our programs are designed to protect children, strengthen families, and create opportunities for lasting community change.",
   homeVisionTitle: "Vision for Tomorrow",
   homeVisionText: "Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.",
+  homeVisionImage: "",
+  homeSnapshotImage1: "",
+  homeSnapshotImage2: "",
+  homeProgramImage1: "",
+  homeProgramImage2: "",
+  homeProgramImage3: "",
+  homeProgramImage4: "",
   aboutHeaderTitle: 'About Naanghirisa',
   aboutHeaderSubtitle: 'Building a community with equal opportunities.',
   aboutJoinText: 'We welcome volunteers, donors, and partners who share our vision.',
-  transparencyIntro: 'At Naanghirisa, transparency is a core value.',
-  transparencyArchivesText: 'Approved financial records and archived accountability reports are available to trusted stakeholders.',
+  aboutPublicDomainTitle: 'Butaleja in public domain',
+  aboutPublicDomainText: 'Butaleja district faces severe challenges in education and child welfare. Naanghirisa responds through practical, accountable action.',
   donateIntro: 'Support general welfare or a specific campaign directly from the portal.',
 };
 
@@ -104,6 +137,9 @@ type FeedbackRecord = {
   email?: string;
   message: string;
   category?: string;
+  subject?: string;
+  sender?: string;
+  replyTo?: string;
   date?: string;
   status?: string;
   [key: string]: any;
@@ -115,6 +151,7 @@ const toStringValue = (value: unknown) => (typeof value === "string" ? value : "
 const ensureArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? value as T[] : []);
 const nowIso = () => new Date().toISOString();
 const today = () => new Date().toISOString().split("T")[0];
+const VOLUNTEER_DEFAULT_PASSWORD = "Volunteer@123";
 
 const normalizeUser = (data: DocumentData, id: string): User => ({
   id,
@@ -650,11 +687,84 @@ export const addVolunteerApplication = (application: any) => {
   void persistDoc("volunteers", newVolunteer.id, newVolunteer as any);
   return newVolunteer;
 };
-export const updateVolunteerStatus = (id: string, status: string) => {
-  volunteers = volunteers.map(item => (item.id === id ? { ...item, status, updatedAt: nowIso() } : item));
+export const updateVolunteerStatus = (id: string, status: string, changes: Partial<VolunteerRecord> = {}) => {
+  volunteers = volunteers.map(item => (item.id === id ? { ...item, status, ...changes, updatedAt: nowIso() } : item));
   void persistDoc("volunteers", id, volunteers.find(v => v.id === id) as any);
   notifyStoreChange();
 };
+
+export const acceptVolunteerApplication = async (id: string) => {
+  const application = volunteers.find(item => item.id === id);
+  if (!application) {
+    throw new Error("Volunteer application not found.");
+  }
+  if (!application.email) {
+    throw new Error("Volunteer email is required to create an account.");
+  }
+
+  const created = await createAuthUser({
+    email: application.email.trim().toLowerCase(),
+    password: VOLUNTEER_DEFAULT_PASSWORD,
+    displayName: application.name,
+    photoURL: application.avatar || "",
+  });
+
+  const accountId = created.localId;
+  const portalUser = {
+    id: accountId,
+    name: application.name,
+    email: application.email.trim().toLowerCase(),
+    phone: application.phone || "",
+    role: UserRole.VOLUNTEER,
+    avatar: application.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(application.email || application.name || accountId)}`,
+    location: application.location || "",
+    workDetails: application.interests || application.message || "",
+    status: "Active",
+  } as User;
+
+  await persistDoc("users", accountId, portalUser as any);
+
+  const updatedApplication = {
+    ...application,
+    status: "Approved",
+    accountId,
+    credentialEmailSentAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+
+  volunteers = volunteers.map(item => (item.id === id ? updatedApplication : item));
+  void persistDoc("volunteers", id, updatedApplication as any);
+  notifyStoreChange();
+
+  if (typeof window !== "undefined") {
+    const subject = "Your Naanghirisa volunteer portal access";
+    const body = [
+      `Hello ${application.name},`,
+      "",
+      "Your volunteer application has been approved.",
+      `Login email: ${application.email.trim().toLowerCase()}`,
+      `Temporary password: ${VOLUNTEER_DEFAULT_PASSWORD}`,
+      `Login page: ${window.location.origin}/login`,
+      "",
+      "Please sign in and change your password after your first login.",
+      "",
+      "Thank you for serving with Naanghirisa.",
+    ].join("\n");
+
+    const mailto = `mailto:${encodeURIComponent(application.email.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailto, "_blank", "noopener,noreferrer");
+  }
+
+  addNotification({
+    userId: accountId,
+    title: "Volunteer account created",
+    message: "Your application has been approved and your portal access has been prepared.",
+    type: "general",
+  });
+
+  return { accountId, password: VOLUNTEER_DEFAULT_PASSWORD };
+};
+
 export const upsertVolunteerTask = (volunteerId: string, task: VolunteerTask) => {
   volunteers = volunteers.map(volunteer => {
     if (volunteer.id !== volunteerId) return volunteer;
@@ -744,6 +854,14 @@ export const updateFeedbackMessage = (id: string, changes: Partial<FeedbackRecor
   notifyStoreChange();
   void persistDoc('feedback', id, feedback.find(item => item.id === id) as any);
 };
+
+export const deleteFeedbackMessage = (id: string) => {
+  feedback = feedback.filter(item => item.id !== id);
+  contactMessages = contactMessages.filter(item => item.id !== id);
+  notifyStoreChange();
+  void deleteById('feedback', id);
+};
+
 export const getLeaders = () => leaders;
 export const addLeader = (leader: Leader) => {
   const next = { ...leader, id: leader.id || `leader_${Date.now()}` };

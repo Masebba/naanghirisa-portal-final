@@ -14,9 +14,9 @@ const Transparency: React.FC = () => {
   return (
     <div className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tighter">Accountability & Impact</h1>
-          <p className="text-slate-600 max-w-2xl mx-auto font-medium">
+        <div className="mb-16 rounded-[3rem] px-8 py-16 text-center text-white" style={{ backgroundColor: COLORS.primary, backgroundImage: pageContent.transparencyHeroImage ? `linear-gradient(rgba(88,0,0,0.82), rgba(88,0,0,0.82)), url(${pageContent.transparencyHeroImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <h1 className="text-4xl font-black mb-4 uppercase tracking-tighter">Accountability & Impact</h1>
+          <p className="max-w-2xl mx-auto font-medium text-white/85">
             {pageContent.transparencyIntro || 'At Naanghirisa, transparency is a core value. We track every cent to support community benefit and responsible stewardship.'}
           </p>
         </div>

@@ -22,6 +22,7 @@ const UserManager: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setUsers([...getUsers()]);
@@ -110,7 +111,7 @@ const UserManager: React.FC = () => {
           <p className="mt-1 text-xs font-bold tracking-widest text-slate-400">Manage organisational members and portal roles</p>
         </div>
         <button
-          onClick={() => setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN, password: '' })}
+          onClick={() => { setShowPassword(false); setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN, password: '' }); }}
           className="rounded-lg bg-slate-900 px-6 py-3 text-[10px] font-black tracking-widest text-white transition hover:bg-black"
         >
           Add new user
@@ -171,14 +172,19 @@ const UserManager: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Password</label>
-              <input
-                type="password"
-                className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500"
-                value={editingUser.password || ''}
-                onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
-                placeholder={editingUser.id ? 'Password managed through reset email' : 'Minimum 8 characters'}
-                disabled={Boolean(editingUser.id)}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 pr-11 outline-none focus:ring-1 focus:ring-slate-500"
+                  value={editingUser.password || ''}
+                  onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
+                  placeholder={editingUser.id ? 'Password managed through reset email' : 'Minimum 8 characters'}
+                  disabled={Boolean(editingUser.id)}
+                />
+                <button type="button" onClick={() => setShowPassword(show => !show)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm px-2 py-1 text-slate-400 transition hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                </button>
+              </div>
             </div>
             <div className="flex items-end justify-start gap-2 pt-5">
               <button onClick={handleSave} className="rounded-lg bg-orange-600 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-100 transition hover:bg-orange-700">
@@ -223,7 +229,7 @@ const UserManager: React.FC = () => {
                 <tr key={user.id} className="transition hover:bg-slate-50/70">
                   <td className="px-8 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-slate-900 text-xs font-black text-white">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-xs font-black text-white">
                         {user.avatar ? <img src={user.avatar} className="h-full w-full object-cover" alt={user.name} /> : user.name.charAt(0)}
                       </div>
                       <div>

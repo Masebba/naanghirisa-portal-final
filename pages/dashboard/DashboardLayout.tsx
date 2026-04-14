@@ -62,6 +62,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
     { name: 'Programs', path: '/dashboard/programs', icon: 'fa-heart-pulse', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN] },
     { name: 'News CMS', path: '/dashboard/news', icon: 'fa-newspaper', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN] },
     { name: 'Content CMS', path: '/dashboard/content', icon: 'fa-pen-to-square', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN] },
+    { name: 'About', path: '/dashboard/about', icon: 'fa-book-open', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN] },
+    { name: 'Contact', path: '/dashboard/contact', icon: 'fa-address-book', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN] },
     { name: 'Profile', path: '/dashboard/profile', icon: 'fa-user-gear', roles: [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN, UserRole.DONOR, UserRole.VOLUNTEER] },
     { name: 'Settings', path: '/dashboard/settings', icon: 'fa-sliders', roles: [UserRole.SUPER_ADMIN] },
   ];
@@ -72,7 +74,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
     <div className="min-h-screen bg-slate-50 flex font-inter overflow-x-hidden">
       {/* Sidebar - Desktop and Mobile Drawer */}
       <aside className={`fixed inset-y-0 left-0 w-64 bg-[#FFF7F1] text-slate-500 transition-transform duration-300 z-50 flex flex-col border-r border-slate-300 shadow-lg ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="py-2 w-auto h-20 flex flex-col items-center border-b border-orange-400">
+        <div className="py-2 w-auto h-16 flex flex-col items-center border-b border-orange-400">
           {/* Logo*/}
           <Link to="/" className="flex items-center">
             <img src={logo} alt="Naanghirisa" className="h-10 md:h-16 w-auto" />
@@ -86,7 +88,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center px-2 py-1  transition-all group ${isActive ? 'bg-orange-400 text-white shadow-lg' : 'hover:bg-white/5 hover:text-orange-400'}`}
+                className={`flex items-center gap-2 rounded-lg px-2 py-2 transition-all group ${isActive ? 'bg-orange-400 text-white shadow-lg' : 'hover:bg-white/5 hover:text-orange-400'}`}
               >
                 <i className={`fas ${item.icon} w-5 text-sm ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-orange-400'}`}></i>
                 <span className="ml-3 text-[10px] font-black uppercase tracking-widest">{item.name}</span>
@@ -108,8 +110,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-grow transition-all duration-300 flex flex-col min-w-0 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-64'}`}>
-        <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-orange-400/50 sticky top-0 z-30 px-6 md:px-10 flex justify-between items-center">
+      <div className="flex-grow transition-all duration-300 flex flex-col min-w-0 lg:ml-60">
+        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-orange-400/50 sticky top-0 z-30 px-4 md:px-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600"><i className="fas fa-bars text-xl"></i></button>
             <h2 className="hidden sm:block text-xl font-black uppercase tracking-tighter truncate">{filteredMenu.find(m => m.path === location.pathname)?.name || 'Portal'}</h2>
@@ -144,14 +146,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
                 <p className="text-[10px] font-black uppercase">{user.name}</p>
                 <p className="text-[8px] text-orange-600 font-black">{user.role.replace('_', ' ')}</p>
               </div>
-              <div className="w-10 h-10 rounded-3xl bg-slate-900 flex items-center justify-center text-white overflow-hidden font-black">
+              <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center text-white overflow-hidden font-black">
                 {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0)}
               </div>
             </div>
           </div>
         </header>
 
-        <div className="p-4 md:p-8 flex-grow">
+        <div className="p-3 md:p-5 flex-grow">
           {children}
         </div>
 

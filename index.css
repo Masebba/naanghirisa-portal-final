@@ -29,6 +29,30 @@ textarea {
   font: inherit;
 }
 
+button:not([class*='rounded-full']) {
+  border-radius: 0.5rem !important;
+  padding-top: 0.55rem !important;
+  padding-bottom: 0.55rem !important;
+}
+
+input,
+select,
+textarea {
+  border-radius: 0.5rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  padding-left: 0.8rem !important;
+  padding-right: 0.8rem !important;
+}
+
+[class*='rounded-2xl']:not([class*='rounded-full']),
+[class*='rounded-3xl']:not([class*='rounded-full']),
+[class*='rounded-[2']:not([class*='rounded-full']),
+[class*='rounded-[3']:not([class*='rounded-full']),
+[class*='rounded-[4']:not([class*='rounded-full']) {
+  border-radius: 0.5rem !important;
+}
+
 ::selection {
   background: #fdba74;
   color: #111827;

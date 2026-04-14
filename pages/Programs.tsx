@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mockPrograms } from '../services/mockData';
+import { getPageContent, mockPrograms, subscribeStoreUpdates } from '../services/mockData';
 import { COLORS } from '../constants';
 import { Program } from '../types';
 
@@ -9,6 +9,9 @@ const Programs: React.FC = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<'All' | 'Recurrent' | 'Annual'>('All');
   const [visibleCount, setVisibleCount] = useState(6);
+  const [pageContent, setPageContent] = useState(getPageContent());
+
+  useEffect(() => subscribeStoreUpdates(() => setPageContent(getPageContent())), []);
 
   const filteredPrograms = useMemo(() => {
     return mockPrograms.filter(p => filter === 'All' || p.type === filter);
@@ -29,7 +32,7 @@ const Programs: React.FC = () => {
   return (
     <div className="bg-white">
       {/* Page Header */}
-      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary }}>
+      <div className="py-24 text-center text-white" style={{ backgroundColor: COLORS.primary, backgroundImage: pageContent.programsHeroImage ? `linear-gradient(rgba(88,0,0,0.82), rgba(88,0,0,0.82)), url(${pageContent.programsHeroImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-5xl font-black mb-4 uppercase tracking-tighter">Our Programs</h1>
           <p className="text-xl opacity-90 max-w-2xl mx-auto font-medium">
