@@ -33,7 +33,7 @@ const ProfileSettings: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const url = await uploadImageFile(file, 'avatars');
+      const url = await uploadImageFile(file);
       setFormData({ ...formData, avatar: url });
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Image upload failed.');

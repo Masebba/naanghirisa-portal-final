@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserRole, User, Notification } from '../../types';
 import { BRAND, COLORS } from '../../constants';
 import { authService } from '../../services/authService';
-import { getNotifications, markNotificationRead } from '../../services/mockData';
+import { getNotifications, markNotificationRead, subscribeStoreUpdates } from '../../services/mockData';
 import logo from "../../assets/logo.png";
 
 interface DashboardLayoutProps {
@@ -23,8 +23,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
   useEffect(() => {
     const fetchNotifs = () => setNotifications(getNotifications(user.id));
     fetchNotifs();
+    const unsubscribe = subscribeStoreUpdates(fetchNotifs);
     const interval = setInterval(fetchNotifs, 5000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); unsubscribe(); };
   }, [user.id]);
 
   useEffect(() => {

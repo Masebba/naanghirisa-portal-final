@@ -9,7 +9,7 @@ import {
   updateProfile,
   type User as FirebaseAuthUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from './firebase';
 import { createAuthUser } from './authApi';
 import { startPrivateListeners } from './mockData';
@@ -17,8 +17,6 @@ import { User, UserRole } from '../types';
 
 const AUTH_KEY = 'naanghirisa_session';
 const PROFILE_COLLECTION = 'users';
-const BOOTSTRAP_COLLECTION = 'system';
-const BOOTSTRAP_DOC = 'bootstrap';
 
 const normalizePhone = (value: string) => value.replace(/\s+/g, '').replace(/-/g, '').trim();
 const stripPassword = (user: User): User => {
@@ -31,15 +29,6 @@ type PortalUserDoc = User & {
   createdAt?: string;
   updatedAt?: string;
   status?: 'Active' | 'Disabled';
-};
-
-export type BootstrapStatus = {
-  completed: boolean;
-  superAdminEmail?: string;
-  superAdminUid?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  note?: string;
 };
 
 let currentUser: User | null = null;
@@ -113,7 +102,10 @@ const syncSessionToFirestore = async (firebaseUser: FirebaseAuthUser, profile?: 
     }
   })();
 
-  const resolvedRole = roleFromClaim ?? existing?.role ?? profile?.role ?? UserRole.VOLUNTEER;
+  const usersSnap = await getDocs(collection(db, PROFILE_COLLECTION)).catch(() => null);
+  const hasAnyProfiles = Boolean(usersSnap && !usersSnap.empty);
+  const inferredRole = hasAnyProfiles ? UserRole.VOLUNTEER : UserRole.SUPER_ADMIN;
+  const resolvedRole = roleFromClaim ?? existing?.role ?? profile?.role ?? inferredRole;
   const merged: User = {
     id: firebaseUser.uid,
     name: profile?.name || existing?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Portal User',
@@ -209,92 +201,43 @@ export const authService = {
     return stripPassword(profile);
   },
 
-  bootstrapInitialAdmin: async (user: User & { password: string }) => {
+  registerUser: async (user: User & { password?: string }) => {
     if (!user.password || user.password.length < 8) {
       throw new Error('Password must be at least 8 characters long.');
     }
+    return authService.createUserAccount(user as User & { password: string });
+  },
 
+  createUserAccount: async (user: User & { password: string }) => {
+    if (!user.password || user.password.length < 8) {
+      throw new Error('Password must be at least 8 characters long.');
+    }
     if (!isFirebaseConfigured || !auth || !db) {
-      const fallback = hydrateFromStorage();
-      if (fallback) throw new Error('Firebase is required for production admin bootstrap.');
-      throw new Error('Firebase is not configured.');
+      throw new Error('Firebase is required to create accounts.');
     }
-
-    const status = await authService.getBootstrapStatus();
-    if (status.completed) {
-      throw new Error('An administrator already exists.');
-    }
-
     const created = await createAuthUser({
       email: user.email.trim().toLowerCase(),
       password: user.password,
       displayName: user.name.trim(),
       photoURL: user.avatar || '',
     });
-
     const uid = created.localId;
-    const email = user.email.trim().toLowerCase();
-
-    await signInWithEmailAndPassword(auth, email, user.password);
-
     const adminProfile: User = {
       id: uid,
       name: user.name.trim(),
-      email,
+      email: user.email.trim().toLowerCase(),
       phone: user.phone || '',
-      role: UserRole.SUPER_ADMIN,
+      role: user.role || UserRole.VOLUNTEER,
       avatar: user.avatar || '',
       location: user.location || '',
       workDetails: user.workDetails || '',
       status: 'Active',
     };
-
     await saveProfile(adminProfile, { createdAt: new Date().toISOString() });
-    await setDoc(doc(db, BOOTSTRAP_COLLECTION, BOOTSTRAP_DOC), {
-      completed: true,
-      superAdminEmail: adminProfile.email,
-      superAdminUid: uid,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      source: 'spark-rest-bootstrap',
-    }, { merge: true });
-
-    persistSession(adminProfile);
+    persistSession(stripPassword(adminProfile));
     return stripPassword(adminProfile);
   },
 
-  registerUser: async (user: User & { password?: string }) => {
-    if (!user.password || user.password.length < 8) {
-      throw new Error('Password must be at least 8 characters long.');
-    }
-
-    return authService.bootstrapInitialAdmin(user as User & { password: string });
-  },
-
-  getBootstrapStatus: async (): Promise<BootstrapStatus> => {
-    if (!db || !isFirebaseConfigured) {
-      return { completed: false, note: 'firebase-not-configured' };
-    }
-
-    try {
-      const snap = await getDoc(doc(db, BOOTSTRAP_COLLECTION, BOOTSTRAP_DOC));
-      if (!snap.exists()) {
-        return { completed: false };
-      }
-      const data = snap.data() as Partial<BootstrapStatus> & { source?: string };
-      return {
-        completed: Boolean(data.completed),
-        superAdminEmail: data.superAdminEmail,
-        superAdminUid: data.superAdminUid,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-        note: data.source || undefined,
-      };
-    } catch (error) {
-      console.warn('Unable to read bootstrap status from Firestore.', error);
-      return { completed: false, note: 'read-failed' };
-    }
-  },
 
   logout: async () => {
     persistSession(null);

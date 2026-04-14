@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
-import { getPageContent, updatePageContent } from '../../services/mockData';
+import React, { useEffect, useState } from 'react';
+import { getPageContent, subscribeStoreUpdates, updatePageContent } from '../../services/mockData';
 import { COLORS } from '../../constants';
 
 const ContactManager: React.FC = () => {
   const [content, setContent] = useState(getPageContent());
   const [isSaving, setIsSaving] = useState(false);
+  useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
 
   const handleSave = () => {
     setIsSaving(true);

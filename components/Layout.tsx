@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BRAND, COLORS } from "../constants";
+import { subscribeStoreUpdates } from '../services/mockData';
 import logo from "../assets/logo.png";
 
 /* ================= NAVBAR ================= */
@@ -205,10 +206,14 @@ const Footer: React.FC = () => {
 
 /* ================= LAYOUT ================= */
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen flex flex-col">
-    <Navbar />
-    <main className="flex-grow">{children}</main>
-    <Footer />
-  </div>
-);
+export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [, setTick] = useState(0);
+  useEffect(() => subscribeStoreUpdates(() => setTick(t => t + 1)), []);
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+    </div>
+  );
+};

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { COLORS } from "../constants";
-import { getPageContent, getLeaders } from "../services/mockData";
+import { getPageContent, getLeaders, subscribeStoreUpdates } from "../services/mockData";
 /* LOCAL IMAGES */
 import headerBg from "../assets/images/about-header.jpg";
 import formationImg from "../assets/images/formation.jpg";
@@ -69,7 +69,8 @@ const fallbackLeaders = [
 ];
 
 const About: React.FC = () => {
-  const content = getPageContent();
+  const [content, setContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
   return (
     <div className="bg-white">
 
@@ -83,9 +84,9 @@ const About: React.FC = () => {
         }}
       >
         <div className="relative z-10 max-w-7xl mx-auto px-4">
-          <h1 className="text-5xl font-black mb-4">About Naanghirisa</h1>
+          <h1 className="text-5xl font-black mb-4">{content.aboutHeaderTitle || 'About Naanghirisa'}</h1>
           <p className="text-xl opacity-90 max-w-2xl mx-auto font-medium">
-            {content.aboutVision || 'Building a community with equal opportunities.'}
+            {content.aboutHeaderSubtitle || content.aboutVision || 'Building a community with equal opportunities.'}
           </p>
         </div>
       </section>
@@ -105,7 +106,7 @@ const About: React.FC = () => {
               {content.aboutStory || 'Naanghirisa was founded to respond to the gaps facing vulnerable children and households in the community.'}
             </p>
             <p className="text-slate-600 leading-relaxed">
-              Naanghirisa is a community-based organisation that works to support vulnerable households, improve education access, and strengthen local livelihoods.
+              {content.aboutJoinText || 'Naanghirisa is a community-based organisation that works to support vulnerable households, improve education access, and strengthen local livelihoods.'}
             </p>
 
             {/* Mission & Vision */}

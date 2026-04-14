@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { COLORS } from '../constants';
-import { addVolunteerApplication, getPageContent } from '../services/mockData';
+import { addVolunteerApplication, getPageContent, subscribeStoreUpdates } from '../services/mockData';
 
 const Volunteer: React.FC = () => {
-  const content = getPageContent();
+  const [content, setContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
   const [formData, setFormData] = useState({
     name: '',
     email: '',

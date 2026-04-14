@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getDonations, getExpenditures, getPageContent } from '../services/mockData';
+import { getDonations, getExpenditures, getPageContent, subscribeStoreUpdates } from '../services/mockData';
 import { authService } from '../services/authService';
 import { COLORS } from '../constants';
 
 const Transparency: React.FC = () => {
   const isLoggedIn = authService.isAuthenticated();
-  const pageContent = getPageContent();
+  const [pageContent, setPageContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setPageContent(getPageContent())), []);
   const expenditures = getExpenditures().filter(e => e.status === 'Approved');
   const donations = getDonations();
 
@@ -16,7 +17,7 @@ const Transparency: React.FC = () => {
         <div className="text-center mb-16">
           <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tighter">Accountability & Impact</h1>
           <p className="text-slate-600 max-w-2xl mx-auto font-medium">
-            At Naanghirisa, transparency is a core value. We track every cent to support community benefit and responsible stewardship.
+            {pageContent.transparencyIntro || 'At Naanghirisa, transparency is a core value. We track every cent to support community benefit and responsible stewardship.'}
           </p>
         </div>
 

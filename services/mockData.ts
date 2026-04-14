@@ -71,6 +71,12 @@ const initialPageContent = {
   homeWhoWeAreText: "Poverty, early marriage, teenage pregnancies, gender based violence, HIV and AIDS, and low participation in post-primary education are some of the situations attributed to Butaleja District.",
   homeVisionTitle: "Vision for Tomorrow",
   homeVisionText: "Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.",
+  aboutHeaderTitle: 'About Naanghirisa',
+  aboutHeaderSubtitle: 'Building a community with equal opportunities.',
+  aboutJoinText: 'We welcome volunteers, donors, and partners who share our vision.',
+  transparencyIntro: 'At Naanghirisa, transparency is a core value.',
+  transparencyArchivesText: 'Approved financial records and archived accountability reports are available to trusted stakeholders.',
+  donateIntro: 'Support general welfare or a specific campaign directly from the portal.',
 };
 
 export type PageContent = typeof initialPageContent;
@@ -119,7 +125,7 @@ const normalizeUser = (data: DocumentData, id: string): User => ({
   avatar: toStringValue(data.avatar),
   location: toStringValue(data.location),
   workDetails: toStringValue(data.workDetails),
-  status: toStringValue(data.status) || 'Active',
+  status: (toStringValue(data.status) as User['status']) || 'Active',
 });
 
 const normalizeProgram = (data: DocumentData, id: string): Program => ({
@@ -256,6 +262,24 @@ let notifications: Notification[] = [];
 let feedback: FeedbackRecord[] = [];
 let contactMessages: FeedbackRecord[] = [];
 let leaders: Leader[] = [];
+let systemSettings: Record<string, unknown> = {
+  siteName: BRAND.fullName,
+  maintenanceMode: false,
+  allowDonorSignups: true,
+  allowVolunteerApplications: true,
+  notificationEmails: 'admin@naanghirisa.org',
+  primaryCurrency: 'USD',
+  sessionTimeout: 60,
+  footerSocialLinks: '',
+  contactHours: 'Mon - Fri, 8:00 AM - 5:00 PM',
+  publicRegistrationEnabled: true,
+};
+const storeListeners = new Set<() => void>();
+const notifyStoreChange = () => { storeListeners.forEach(listener => listener()); };
+export const subscribeStoreUpdates = (listener: () => void) => {
+  storeListeners.add(listener);
+  return () => storeListeners.delete(listener);
+};
 
 export let mockPrograms: Program[] = [];
 export let mockCampaigns: Campaign[] = [];
@@ -279,14 +303,15 @@ const syncLegacyExports = () => {
   mockDonations = donations;
   mockLeaders = leaders;
   mockStudents = [];
+  notifyStoreChange();
 };
 
-const sortByNewest = <T extends Timestamped & { date?: string }>(items: T[]) =>
-  [...items].sort((a, b) => {
+const sortByNewest = <T,>(items: T[]) =>
+  [...items].sort((a: any, b: any) => {
     const aTime = new Date(a.updatedAt || a.createdAt || a.date || 0).getTime();
     const bTime = new Date(b.updatedAt || b.createdAt || b.date || 0).getTime();
     return bTime - aTime;
-  });
+  }) as T[];
 
 const attachListener = <T>(
   label: string,
@@ -312,24 +337,32 @@ export const startPrivateListeners = (role?: UserRole) => {
 
   attachListener("users", query(collection(db, "users"), orderBy("updatedAt", "desc")), normalizeUser, items => {
     users = items;
+    notifyStoreChange();
   });
   attachListener("expenditures", query(collection(db, "expenditures"), orderBy("updatedAt", "desc")), normalizeExpenditure, items => {
     expenditures = items;
+    notifyStoreChange();
   });
   attachListener("otherIncome", query(collection(db, "otherIncome"), orderBy("updatedAt", "desc")), normalizeOtherIncome, items => {
     otherIncome = items;
+    notifyStoreChange();
   });
   attachListener("volunteers", query(collection(db, "volunteers"), orderBy("updatedAt", "desc")), normalizeVolunteer, items => {
     volunteers = items;
+    notifyStoreChange();
   });
   attachListener("taskLibrary", query(collection(db, "taskLibrary"), orderBy("updatedAt", "desc")), normalizeLibraryTask, items => {
     taskLibrary = items;
+    notifyStoreChange();
   });
   attachListener("notifications", query(collection(db, "notifications"), orderBy("updatedAt", "desc")), normalizeNotification, items => {
     notifications = items;
+    notifyStoreChange();
   });
   attachListener("feedback", query(collection(db, "feedback"), orderBy("updatedAt", "desc")), normalizeFeedback, items => {
     feedback = items;
+    contactMessages = items;
+    notifyStoreChange();
   });
 };
 
@@ -340,25 +373,31 @@ const startPublicListeners = () => {
   attachListener("programs", query(collection(db, "programs"), orderBy("updatedAt", "desc")), normalizeProgram, items => {
     programs = items;
     syncLegacyExports();
+    notifyStoreChange();
   });
   attachListener("campaigns", query(collection(db, "campaigns"), orderBy("updatedAt", "desc")), normalizeCampaign, items => {
     campaigns = items;
     syncLegacyExports();
+    notifyStoreChange();
   });
   attachListener("donations", query(collection(db, "donations"), orderBy("updatedAt", "desc")), normalizeDonation, items => {
     donations = items;
     syncLegacyExports();
+    notifyStoreChange();
   });
   attachListener("news", query(collection(db, "news"), orderBy("updatedAt", "desc")), normalizeNews, items => {
     news = items;
     syncLegacyExports();
+    notifyStoreChange();
   });
   attachListener("leaders", query(collection(db, "leaders"), orderBy("updatedAt", "desc")), normalizeLeader, items => {
     leaders = items;
     syncLegacyExports();
+    notifyStoreChange();
   });
   attachListener("approved expenditures", query(collection(db, "expenditures"), where("status", "==", "Approved")), normalizeExpenditure, items => {
     expenditures = items;
+    notifyStoreChange();
   });
 
   onSnapshot(
@@ -370,9 +409,23 @@ const startPublicListeners = () => {
         pageContent = { ...initialPageContent };
       }
       void updateTotals(false);
+      notifyStoreChange();
     },
     error => {
       console.warn("Firestore listener failed for site/content.", error);
+    },
+  );
+
+  onSnapshot(
+    doc(db, "site", "settings"),
+    snap => {
+      if (snap.exists()) {
+        systemSettings = { ...systemSettings, ...(snap.data() as Record<string, unknown>) };
+      }
+      notifyStoreChange();
+    },
+    error => {
+      console.warn("Firestore listener failed for site/settings.", error);
     },
   );
 };
@@ -413,8 +466,17 @@ const updateTotals = async (persist = true) => {
   if (persist && db && isFirebaseConfigured) {
     await setDoc(doc(db, "site", "content"), { ...pageContent, updatedAt: nowIso() }, { merge: true });
   }
+  notifyStoreChange();
 };
 
+export const getSystemSettings = () => systemSettings;
+export const updateSystemSettings = (settings: Record<string, unknown>) => {
+  systemSettings = { ...systemSettings, ...settings };
+  notifyStoreChange();
+  if (db && isFirebaseConfigured) {
+    void setDoc(doc(db, 'site', 'settings'), { ...systemSettings, updatedAt: nowIso() }, { merge: true });
+  }
+};
 
 export const clearAllData = async () => {
   programs = [];
@@ -447,11 +509,13 @@ export const getPrograms = () => programs;
 export const addProgram = (program: Program) => {
   programs = sortByNewest([{ ...program, updatedAt: nowIso(), createdAt: nowIso() } as Program & Timestamped, ...programs.filter(item => item.id !== program.id)] as any);
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("programs", program.id, program as any);
 };
 export const updateProgram = (program: Program) => {
   programs = programs.map(item => (item.id === program.id ? { ...program, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("programs", program.id, program as any);
 };
 export const deleteProgram = (id: string) => {
@@ -464,11 +528,13 @@ export const getCampaigns = () => campaigns;
 export const addCampaign = (campaign: Campaign) => {
   campaigns = sortByNewest([{ ...campaign, updatedAt: nowIso(), createdAt: nowIso() } as any, ...campaigns.filter(item => item.id !== campaign.id)]);
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("campaigns", campaign.id, campaign as any);
 };
 export const updateCampaign = (campaign: Campaign) => {
   campaigns = campaigns.map(item => (item.id === campaign.id ? { ...campaign, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("campaigns", campaign.id, campaign as any);
 };
 export const deleteCampaign = (id: string) => {
@@ -484,17 +550,20 @@ export const addDonation = (donation: Donation) => {
   void persistDoc("donations", donation.id, donation as any);
   void bumpCampaignAmount(donation.campaignId, donation.amount);
   void updateTotals();
+  notifyStoreChange();
 };
 
 export const getNews = () => news;
 export const addNews = (post: NewsPost) => {
   news = sortByNewest([{ ...post, updatedAt: nowIso(), createdAt: nowIso() } as any, ...news.filter(item => item.id !== post.id)]);
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("news", post.id, post as any);
 };
 export const updateNews = (post: NewsPost) => {
   news = news.map(item => (item.id === post.id ? { ...post, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc("news", post.id, post as any);
 };
 export const deleteNews = (id: string) => {
@@ -512,6 +581,7 @@ export const addUser = (user: User) => {
   })() : profile;
   users = sortByNewest([{ ...persistedUser, updatedAt: nowIso(), createdAt: nowIso() } as any, ...users.filter(item => item.id !== user.id)]);
   if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any);
+  notifyStoreChange();
   return persistedUser;
 };
 export const updateUser = (user: User) => {
@@ -521,13 +591,16 @@ export const updateUser = (user: User) => {
   })() : user;
   users = users.map(item => (item.id === user.id ? { ...item, ...persistedUser, updatedAt: nowIso() } : item));
   if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any);
+  notifyStoreChange();
 };
 export const deleteUser = (id: string) => {
   users = users.filter(item => item.id !== id);
   if (isFirebaseConfigured) void deleteById("users", id);
+  notifyStoreChange();
 };
 export const resetUserPassword = (id: string, newPassword: string) => {
   if (!isFirebaseConfigured) void persistDoc("users", id, { password: newPassword });
+  notifyStoreChange();
 };
 
 export const getExpenditures = () => expenditures;
@@ -535,11 +608,13 @@ export const addExpenditure = (expenditure: Expenditure) => {
   expenditures = sortByNewest([{ ...expenditure, updatedAt: nowIso(), createdAt: nowIso() } as any, ...expenditures.filter(item => item.id !== expenditure.id)]);
   void persistDoc("expenditures", expenditure.id, expenditure as any);
   void updateTotals();
+  notifyStoreChange();
 };
 export const updateExpenditure = (expenditure: Expenditure) => {
   expenditures = expenditures.map(item => (item.id === expenditure.id ? { ...expenditure, updatedAt: nowIso() } as any : item));
   void persistDoc("expenditures", expenditure.id, expenditure as any);
   void updateTotals();
+  notifyStoreChange();
 };
 
 export const getOtherIncome = () => otherIncome;
@@ -547,6 +622,7 @@ export const addOtherIncome = (income: OtherIncome) => {
   otherIncome = sortByNewest([{ ...income, updatedAt: nowIso(), createdAt: nowIso() } as any, ...otherIncome.filter(item => item.id !== income.id)]);
   void persistDoc("otherIncome", income.id, income as any);
   void updateTotals();
+  notifyStoreChange();
 };
 
 export const getPageContent = () => pageContent;
@@ -556,6 +632,7 @@ export const updatePageContent = (content: Partial<PageContent>) => {
   if (db && isFirebaseConfigured) {
     void setDoc(doc(db, "site", "content"), { ...pageContent, updatedAt: nowIso() }, { merge: true });
   }
+  notifyStoreChange();
 };
 
 export const getVolunteers = () => volunteers;
@@ -569,12 +646,14 @@ export const addVolunteerApplication = (application: any) => {
     documents: [],
   };
   volunteers = sortByNewest([newVolunteer, ...volunteers.filter(item => item.id !== newVolunteer.id)]);
+  notifyStoreChange();
   void persistDoc("volunteers", newVolunteer.id, newVolunteer as any);
   return newVolunteer;
 };
 export const updateVolunteerStatus = (id: string, status: string) => {
   volunteers = volunteers.map(item => (item.id === id ? { ...item, status, updatedAt: nowIso() } : item));
   void persistDoc("volunteers", id, volunteers.find(v => v.id === id) as any);
+  notifyStoreChange();
 };
 export const upsertVolunteerTask = (volunteerId: string, task: VolunteerTask) => {
   volunteers = volunteers.map(volunteer => {
@@ -586,12 +665,14 @@ export const upsertVolunteerTask = (volunteerId: string, task: VolunteerTask) =>
     return { ...volunteer, tasks, updatedAt: nowIso() };
   });
   void persistDoc("volunteers", volunteerId, volunteers.find(v => v.id === volunteerId) as any);
+  notifyStoreChange();
 };
 export const deleteVolunteerTask = (volunteerId: string, taskId: string) => {
   volunteers = volunteers.map(volunteer =>
     volunteer.id === volunteerId ? { ...volunteer, tasks: (volunteer.tasks || []).filter((task: VolunteerTask) => task.id !== taskId), updatedAt: nowIso() } : volunteer,
   );
   void persistDoc("volunteers", volunteerId, volunteers.find(v => v.id === volunteerId) as any);
+  notifyStoreChange();
 };
 export const updateTaskProgress = (volunteerId: string, taskId: string, progress: number) => {
   volunteers = volunteers.map(volunteer =>
@@ -606,6 +687,7 @@ export const updateTaskProgress = (volunteerId: string, taskId: string, progress
       : volunteer,
   );
   void persistDoc("volunteers", volunteerId, volunteers.find(v => v.id === volunteerId) as any);
+  notifyStoreChange();
 };
 export const awardVolunteerDocument = (volunteerId: string, document: Omit<VolunteerDocument, 'id' | 'issueDate' | 'referenceNo'>) => {
   const issuedDocument: VolunteerDocument = {
@@ -618,6 +700,7 @@ export const awardVolunteerDocument = (volunteerId: string, document: Omit<Volun
     volunteer.id === volunteerId ? { ...volunteer, documents: [...(volunteer.documents || []), issuedDocument], updatedAt: nowIso() } : volunteer,
   );
   void persistDoc("volunteers", volunteerId, volunteers.find(v => v.id === volunteerId) as any);
+  notifyStoreChange();
   return issuedDocument;
 };
 
@@ -626,10 +709,12 @@ export const addLibraryTask = (task: LibraryTask) => {
   const next = { ...task, id: task.id || `lib_${Date.now()}` };
   taskLibrary = sortByNewest([next as any, ...taskLibrary.filter(item => item.id !== next.id)]);
   void persistDoc("taskLibrary", next.id, next as any);
+  notifyStoreChange();
 };
 export const deleteLibraryTask = (id: string) => {
   taskLibrary = taskLibrary.filter(item => item.id !== id);
   void deleteById("taskLibrary", id);
+  notifyStoreChange();
 };
 
 export const getNotifications = (userId: string) => notifications.filter(item => item.userId === userId);
@@ -642,15 +727,23 @@ export const addNotification = (notification: Omit<Notification, 'id' | 'read' |
   };
   notifications = sortByNewest([created, ...notifications]);
   void persistDoc("notifications", created.id, created as any);
+  notifyStoreChange();
   return created;
 };
 export const markNotificationRead = (id: string) => {
   notifications = notifications.map(item => (item.id === id ? { ...item, read: true } : item));
   const updated = notifications.find(item => item.id === id);
   if (updated) void persistDoc("notifications", id, updated as any);
+  notifyStoreChange();
 };
 
 export const getFeedback = () => feedback;
+export const updateFeedbackMessage = (id: string, changes: Partial<FeedbackRecord>) => {
+  feedback = feedback.map(item => item.id === id ? { ...item, ...changes, updatedAt: nowIso() } as any : item);
+  contactMessages = contactMessages.map(item => item.id === id ? { ...item, ...changes, updatedAt: nowIso() } as any : item);
+  notifyStoreChange();
+  void persistDoc('feedback', id, feedback.find(item => item.id === id) as any);
+};
 export const getLeaders = () => leaders;
 export const addLeader = (leader: Leader) => {
   const next = { ...leader, id: leader.id || `leader_${Date.now()}` };
@@ -661,21 +754,28 @@ export const addLeader = (leader: Leader) => {
 export const updateLeader = (leader: Leader) => {
   leaders = leaders.map(item => (item.id === leader.id ? { ...leader, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
+  notifyStoreChange();
   void persistDoc('leaders', leader.id, leader as any);
 };
 export const deleteLeader = (id: string) => {
   leaders = leaders.filter(item => item.id !== id);
   syncLegacyExports();
+  notifyStoreChange();
   void deleteById('leaders', id);
 };
 export const addContactMessage = (message: Omit<FeedbackRecord, 'id' | 'date' | 'status'>) => {
-  const created: FeedbackRecord = {
+  const created = {
     ...message,
     id: `msg_${Date.now()}`,
     status: 'New',
     date: today(),
-  };
+    subject: message.category || (message as any).subject || 'General Inquiry',
+    sender: message.name || message.email || 'Anonymous',
+  } as unknown as FeedbackRecord;
+  feedback = sortByNewest([created, ...feedback]);
   contactMessages = sortByNewest([created, ...contactMessages]);
+  feedback = sortByNewest([created, ...feedback]);
+  notifyStoreChange();
   void persistDoc('feedback', created.id, created as any);
   return created;
 };

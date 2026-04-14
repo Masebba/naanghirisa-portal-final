@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getCampaigns, getDonations, getPageContent } from '../services/mockData';
+import { getCampaigns, getDonations, getPageContent, subscribeStoreUpdates } from '../services/mockData';
 import { COLORS } from '../constants';
 
 const Campaigns: React.FC = () => {
@@ -10,7 +10,8 @@ const Campaigns: React.FC = () => {
 
   const campaigns = getCampaigns();
   const donations = getDonations();
-  const pageContent = getPageContent();
+  const [pageContent, setPageContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setPageContent(getPageContent())), []);
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(c => filter === 'All' || c.status === filter);

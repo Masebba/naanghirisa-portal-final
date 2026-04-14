@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { addLeader, deleteLeader, getLeaders, getPageContent, updatePageContent, updateLeader } from '../../services/mockData';
+import React, { useEffect, useState } from 'react';
+import { addLeader, deleteLeader, getLeaders, getPageContent, subscribeStoreUpdates, updatePageContent, updateLeader } from '../../services/mockData';
 import { COLORS } from '../../constants';
 import { Leader } from '../../types';
 
@@ -9,6 +9,7 @@ const AboutManager: React.FC = () => {
   const [leaders, setLeaders] = useState<Leader[]>(getLeaders());
   const [isSaving, setIsSaving] = useState(false);
   const [editingLeader, setEditingLeader] = useState<Partial<Leader> | null>(null);
+  useEffect(() => subscribeStoreUpdates(() => { setContent(getPageContent()); setLeaders(getLeaders()); }), []);
 
   const handleSave = () => {
     setIsSaving(true);

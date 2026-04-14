@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { COLORS } from '../constants';
-import { getPageContent } from '../services/mockData';
+import { getPageContent, subscribeStoreUpdates } from '../services/mockData';
 import { authService } from '../services/authService';
 import { addDonation, getCampaigns, getPrograms } from '../services/mockData';
 import { Campaign, Program } from '../types';
@@ -11,7 +11,8 @@ type PaymentMethod = 'MTN' | 'AIRTEL' | 'CARD';
 const presetAmounts = [25, 50, 100, 500];
 
 const Donate: React.FC = () => {
-  const content = getPageContent();
+  const [content, setContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
   const location = useLocation();
   const user = authService.getCurrentUser();
   const searchParams = new URLSearchParams(location.search);

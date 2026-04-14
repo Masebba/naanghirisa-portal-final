@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BRAND, COLORS } from "../constants";
-import { addContactMessage, getPageContent, getPrograms } from '../services/mockData';
+import { addContactMessage, getPageContent, getPrograms, subscribeStoreUpdates } from '../services/mockData';
 
 /* LOCAL IMAGES */
 import heroBg from "../assets/images/hero-bg.jpg";
@@ -16,7 +16,8 @@ import vision from "../assets/images/vision.jpg";
 
 
 const Home: React.FC = () => {
-  const content = getPageContent();
+  const [content, setContent] = useState(getPageContent());
+  useEffect(() => subscribeStoreUpdates(() => setContent(getPageContent())), []);
   const programs = getPrograms();
 
   return (
@@ -159,9 +160,9 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-20">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-4xl font-black mb-6 uppercase tracking-tighter" style={{ color: COLORS.primary }}>Vision for Tomorrow</h2>
+            <h2 className="text-4xl font-black mb-6 uppercase tracking-tighter" style={{ color: COLORS.primary }}>{content.homeVisionTitle || 'Vision for Tomorrow'}</h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8">
-              Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.
+              {content.homeVisionText || 'Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.'}
             </p>
             <div className="grid gap-2">
               {[
