@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { getPageContent, updatePageContent, mockLeaders } from '../../services/mockData';
+import { addLeader, deleteLeader, getLeaders, getPageContent, updatePageContent, updateLeader } from '../../services/mockData';
 import { COLORS } from '../../constants';
 import { Leader } from '../../types';
 
 const AboutManager: React.FC = () => {
   const [content, setContent] = useState(getPageContent());
-  const [leaders, setLeaders] = useState<Leader[]>(mockLeaders);
+  const [leaders, setLeaders] = useState<Leader[]>(getLeaders());
   const [isSaving, setIsSaving] = useState(false);
   const [editingLeader, setEditingLeader] = useState<Partial<Leader> | null>(null);
 
@@ -14,10 +14,8 @@ const AboutManager: React.FC = () => {
     setIsSaving(true);
     updatePageContent(content);
     // In a real app, you'd also save leaders
-    setTimeout(() => {
-      setIsSaving(false);
-      alert('About page content updated!');
-    }, 800);
+    setIsSaving(false);
+    alert('About page content updated!');
   };
 
   const handleImageUpload = (key: 'aboutJourneyImage', e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,12 +42,21 @@ const AboutManager: React.FC = () => {
 
   const saveLeader = () => {
     if (editingLeader) {
+      const payload = {
+        id: String(editingLeader.id || `leader_${Date.now()}`),
+        name: String(editingLeader.name || '').trim(),
+        role: String(editingLeader.role || '').trim(),
+        profile: String(editingLeader.profile || '').trim(),
+        image: String(editingLeader.image || ''),
+      } as Leader;
+
       if (editingLeader.id) {
-        setLeaders(leaders.map(l => l.id === editingLeader.id ? (editingLeader as Leader) : l));
+        updateLeader(payload);
       } else {
-        const newLeader = { ...editingLeader, id: `l${Date.now()}` } as Leader;
-        setLeaders([...leaders, newLeader]);
+        addLeader(payload);
       }
+
+      setLeaders(getLeaders());
       setEditingLeader(null);
     }
   };
@@ -201,7 +208,7 @@ const AboutManager: React.FC = () => {
                    </div>
                    <div className="ml-auto flex gap-2">
                       <button onClick={() => setEditingLeader(leader)} className="text-slate-300 hover:text-blue-500"><i className="fas fa-edit"></i></button>
-                      <button onClick={() => setLeaders(leaders.filter(l => l.id !== leader.id))} className="text-slate-300 hover:text-red-600"><i className="fas fa-trash-alt"></i></button>
+                      <button onClick={() => { deleteLeader(leader.id); setLeaders(getLeaders()); }} className="text-slate-300 hover:text-red-600"><i className="fas fa-trash-alt"></i></button>
                    </div>
                 </div>
               ))}

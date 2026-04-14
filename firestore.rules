@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDocPath(userId) {
+      return /databases/$(database)/documents/users/$(userId);
+    }
+
+    function userRole(userId) {
+      return exists(userDocPath(userId)) ? get(userDocPath(userId)).data.role : null;
+    }
+
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return signedIn() && userRole(request.auth.uid) in ['SUPER_ADMIN', 'MID_ADMIN', 'STAFF_ADMIN'];
+    }
+
+    match /system/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site/content {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /programs/{programId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /donations/{donationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /expenditures/{expenditureId} {
+      allow read: if isAdmin() || resource.data.status == 'Approved';
+      allow write: if isAdmin();
+    }
+
+    match /otherIncome/{incomeId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /volunteers/{volunteerId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /taskLibrary/{taskId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /feedback/{feedbackId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || isSelf(userId);
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isSelf(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

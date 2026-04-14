@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { COLORS } from '../constants';
+import { getPageContent } from '../services/mockData';
 import { authService } from '../services/authService';
 import { addDonation, getCampaigns, getPrograms } from '../services/mockData';
 import { Campaign, Program } from '../types';
@@ -10,6 +11,7 @@ type PaymentMethod = 'MTN' | 'AIRTEL' | 'CARD';
 const presetAmounts = [25, 50, 100, 500];
 
 const Donate: React.FC = () => {
+  const content = getPageContent();
   const location = useLocation();
   const user = authService.getCurrentUser();
   const searchParams = new URLSearchParams(location.search);
@@ -23,7 +25,6 @@ const Donate: React.FC = () => {
   const [guestEmail, setGuestEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [receipt, setReceipt] = useState<{ reference: string; target: string } | null>(null);
 
   const campaigns = getCampaigns().filter(campaign => campaign.status === 'Active');
@@ -46,9 +47,6 @@ const Donate: React.FC = () => {
       return;
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => window.setTimeout(resolve, 700));
-
     const finalName = user?.name || guestName.trim() || 'Anonymous Supporter';
     const targetLabel = selectedTarget.type === 'General' ? 'General Welfare' : selectedTarget.name;
     const targetId = selectedTarget.type === 'General' ? 'General' : selectedTarget.id;
@@ -61,10 +59,14 @@ const Donate: React.FC = () => {
       category: selectedTarget.type,
       date: new Date().toISOString().split('T')[0],
       description: `${finalName} contributed via ${paymentMethod || 'CARD'} to ${targetLabel}`,
-    });
+      receiptImage: '',
+      donorEmail: guestEmail || user?.email || '',
+      paymentMethod: paymentMethod || 'CARD',
+      phoneNumber: phone,
+      status: 'Recorded',
+    } as any);
 
     setReceipt({ reference: `NAA-${Date.now()}`, target: targetLabel });
-    setIsProcessing(false);
     setStep(4);
   };
 
@@ -101,7 +103,7 @@ const Donate: React.FC = () => {
       <div className="mx-auto max-w-4xl">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl" style={{ color: COLORS.primary }}>
-            Change a life today
+            {content.donateHeroTitle || 'Change a life today'}
           </h1>
           <p className="mt-4 text-xs font-black uppercase tracking-[0.25em] text-slate-400">
             Step {step} of 3
@@ -109,15 +111,6 @@ const Donate: React.FC = () => {
         </div>
 
         <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-2xl">
-          {isProcessing && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/90 px-6 text-center backdrop-blur-sm">
-              <div>
-                <div className="mx-auto mb-6 h-14 w-14 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500" />
-                <p className="text-lg font-black uppercase tracking-tight text-slate-900">Processing donation</p>
-                <p className="mt-2 text-xs font-black uppercase tracking-[0.25em] text-slate-400">Securing your contribution</p>
-              </div>
-            </div>
-          )}
 
           <div className="p-8 md:p-12">
             {step === 1 && (

@@ -52,11 +52,26 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(authService.getCurrentUser());
+  const [authReady, setAuthReady] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const unsubscribe = authService.subscribe(setUser);
+    authService.whenReady().then(() => setAuthReady(true));
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     setUser(authService.getCurrentUser());
   }, [location.pathname]);
+
+  if (!authReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm font-medium">
+        Loading portal…
+      </div>
+    );
+  }
 
   return (
     <>

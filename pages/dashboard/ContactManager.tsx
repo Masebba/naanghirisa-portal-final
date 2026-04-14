@@ -10,10 +10,8 @@ const ContactManager: React.FC = () => {
   const handleSave = () => {
     setIsSaving(true);
     updatePageContent(content);
-    setTimeout(() => {
-      setIsSaving(false);
-      alert('Contact information updated across the platform!');
-    }, 800);
+    setIsSaving(false);
+    alert('Contact information updated across the platform!');
   };
 
   return (

@@ -26,10 +26,8 @@ const TransparencyManager: React.FC = () => {
   const handleSave = () => {
     setIsSaving(true);
     updatePageContent(content);
-    setTimeout(() => {
-      setIsSaving(false);
-      alert('Transparency metrics updated!');
-    }, 800);
+    setIsSaving(false);
+    alert('Transparency metrics updated!');
   };
 
   if (isDonor) {

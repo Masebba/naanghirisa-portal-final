@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { BRAND, COLORS } from "../constants";
+import { addContactMessage, getPageContent, getPrograms } from '../services/mockData';
 
 /* LOCAL IMAGES */
 import heroBg from "../assets/images/hero-bg.jpg";
@@ -13,45 +14,19 @@ import prog3 from "../assets/images/program-3.jpeg";
 import prog4 from "../assets/images/program-4.jpg";
 import vision from "../assets/images/vision.jpg";
 
-const programs = [
-  {
-    title: "The PASS Project",
-    img: prog4,
-    icon: "fa-book",
-    description:
-      "The PASS Project focuses on promoting academic success and retention among vulnerable learners through mentorship, scholastic materials, and psychosocial support.",
-  },
-  {
-    title: "Dr. Mungherera Scholarship",
-    img: prog1,
-    icon: "fa-graduation-cap",
-    description:
-      "This scholarship supports bright but disadvantaged girls who are unable to continue with formal education due to financial and social barriers.",
-  },
-  {
-    title: "Butaleja Going Green",
-    img: prog2,
-    icon: "fa-tree",
-    description:
-      "An environmental conservation initiative aimed at tree planting, climate awareness, and sustainable livelihoods within the Butaleja community.",
-  },
-  {
-    title: "Health Campaigns",
-    img: prog3,
-    icon: "fa-hospital",
-    description:
-      "Community health outreaches addressing HIV/AIDS awareness, reproductive health education, sanitation, and access to basic healthcare services.",
-  },
-];
 
 const Home: React.FC = () => {
+  const content = getPageContent();
+  const programs = getPrograms();
+
   return (
     <div className="animate-in fade-in duration-700">
+
       {/* ================= HERO SECTION ================= */}
       <section
         className="relative min-h-[70vh] md:min-h-[85vh] flex items-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(hsla(240, 33%, 7%, 0.88), hsla(240, 4%, 11%, 0.83)), url(${heroBg})`,
+          backgroundImage: `linear-gradient(rgba(88,0,0,0.85), rgba(88,0,0,0.85)), url(${heroBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -63,12 +38,11 @@ const Home: React.FC = () => {
             </span>
 
             <h1 className="text-2xl md:text-4xl lg:text-6xl font-black mb-6 leading-tight">
-              <span className="text-white">Changing Life of </span>
-              <span className="text-orange-500">the Less Privileged</span>
+              <span className="text-white">{content.homeHeroTitle || BRAND.heroTitle}</span>
             </h1>
 
             <p className="text-lg md:text-xl text-red-100 mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0">
-              {BRAND.heroDescription}
+              {content.homeHeroDescription || BRAND.heroDescription}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -104,11 +78,7 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
           <div className="grid grid-cols-2 gap-6">
             <img src={snap1} alt="Community" className="rounded-xl shadow-xl" />
-            <img
-              src={snap2}
-              alt="Education"
-              className="rounded-xl shadow-3xl mt-10"
-            />
+            <img src={snap2} alt="Education" className="rounded-xl shadow-3xl mt-10" />
           </div>
 
           <div className="text-center md:text-left">
@@ -116,20 +86,15 @@ const Home: React.FC = () => {
               Who We Are
             </span>
             <h2 className="text-3xl md:text-4xl font-black mb-6 text-red-900">
-              Our Dedication to Local Impact
+              {content.homeWhoWeAreTitle || 'Our Dedication to Local Impact'}
             </h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8 italic">
-              Poverty, early marriage, teenage pregnancies, gender based
-              violence, HIV and AIDS, and low participation in post-primary
-              education are some of the situations attributed to Butaleja
-              District. Adolescent girls, in particular, face multiple
-              vulnerabilities.
+              {content.homeWhoWeAreText || 'Poverty, early marriage, teenage pregnancies, gender based violence, HIV and AIDS, and low participation in post-primary education are some of the situations attributed to Butaleja District. Adolescent girls, in particular, face multiple vulnerabilities.'}
             </p>
             <p className="text-slate-600 text-lg leading-relaxed mb-8 italic">
-              "We believe in taking consistent and progressive steps. We believe
-              each one of us has a small, vital role to play in building our
-              community. The purpose of this organisation is to champon, promote
-              and protect the interests of Butaleja community together."
+              "We believe in taking consistent and progressive steps. We believe each one of us has a small,
+              vital role to play in building our community. The purpose of this organisation is to champon,
+              promote and protect the interests of Butaleja community together."
             </p>
             <Link
               to="/about"
@@ -149,26 +114,31 @@ const Home: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {programs.map((program, i) => (
+          {(programs.length ? programs.slice(0, 4) : [
+            { id: "p1", name: "Education Support", description: "Scholarship, mentorship, and school materials", image: prog1 },
+            { id: "p2", name: "Community Welfare", description: "Household support and emergency response", image: prog2 },
+            { id: "p3", name: "Environmental Action", description: "Tree planting and climate awareness", image: prog3 },
+            { id: "p4", name: "Health Campaigns", description: "Awareness, sanitation, and outreach", image: prog4 },
+          ]).map((program: any, i) => (
             <div
               key={i}
               className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all"
             >
               <div className="h-48 relative">
                 <img
-                  src={program.img}
-                  alt={program.title}
+                  src={program.image || program.img}
+                  alt={program.name || program.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-4 left-4 p-2 bg-white rounded-xl text-orange-600 shadow-lg">
-                  <i className={`fas ${program.icon}`}></i>
+                  <i className={`fas ${program.icon || "fa-heart"}`}></i>
                 </div>
               </div>
 
               <div className="p-6">
                 <h3 className="font-black text-xl mb-3 text-red-900">
-                  {program.title}
+                  {program.name || program.title}
                 </h3>
                 <p className="text-slate-500 text-sm mb-4">
                   {program.description}
@@ -189,45 +159,28 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-20">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2
-              className="text-4xl font-black mb-6 uppercase tracking-tighter"
-              style={{ color: COLORS.primary }}
-            >
-              Vision for Tomorrow
-            </h2>
+            <h2 className="text-4xl font-black mb-6 uppercase tracking-tighter" style={{ color: COLORS.primary }}>Vision for Tomorrow</h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-8">
-              Naanghirisa is constantly looking ahead. Our dynamic programming
-              model allows us to address emerging challenges.
+              Naanghirisa is constantly looking ahead. Our dynamic programming model allows us to address emerging challenges.
             </p>
             <div className="grid gap-2">
               {[
-                { title: "Digital Learning Hubs", icon: "fa-laptop-code" },
-                { title: "Youth Entrepreneurship Fund", icon: "fa-rocket" },
-                { title: "Mobile Health Clinics", icon: "fa-ambulance" },
-                { title: "Inspire Academy", icon: "fa-school" },
+                { title: 'Digital Learning Hubs', icon: 'fa-laptop-code' },
+                { title: 'Youth Entrepreneurship Fund', icon: 'fa-rocket' },
+                { title: 'Mobile Health Clinics', icon: 'fa-ambulance' },
+                { title: 'Inspire Academy', icon: 'fa-school' },
               ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-5 p-2 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-orange-200 transition-colors"
-                >
-                  <div
-                    className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform"
-                    style={{ color: COLORS.secondary }}
-                  >
+                <div key={i} className="flex items-center gap-5 p-2 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-orange-200 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform" style={{ color: COLORS.secondary }}>
                     <i className={`fas ${item.icon}`}></i>
                   </div>
-                  <span className="font-black text-slate-800 uppercase text-sm tracking-tight">
-                    {item.title}
-                  </span>
+                  <span className="font-black text-slate-800 uppercase text-sm tracking-tight">{item.title}</span>
                 </div>
               ))}
             </div>
           </div>
           <div className="relative">
-            <div
-              className="relative -inset-4 rounded-[4rem] opacity-10 transform rotate-2"
-              style={{ backgroundColor: COLORS.secondary }}
-            ></div>
+            <div className="relative -inset-4 rounded-[4rem] opacity-10 transform rotate-2" style={{ backgroundColor: COLORS.secondary }}></div>
             <img
               src={vision}
               alt="Future Vision"
@@ -236,63 +189,48 @@ const Home: React.FC = () => {
             <div className="absolute -bottom-8 z-10 -right-8 p-10 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl max-w-xs border-4 border-white">
               <p className="text-orange-500 font-black text-3xl mb-2">2026</p>
               <p className="text-slate-300 text-xs font-bold uppercase tracking-widest leading-relaxed">
-                Our goal is to reach 5,000 community members through integrated
-                systems.
+                Our goal is to reach 5,000 community members through integrated systems.
               </p>
             </div>
           </div>
         </div>
       </div>
       {/* Volunteer CTA */}
-      <section
-        className="py-20 relative overflow-hidden text-white"
-        style={{ backgroundColor: COLORS.primary }}
-      >
+      <section className="py-20 relative overflow-hidden text-white" style={{ backgroundColor: COLORS.primary }}>
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 hidden lg:block">
           <i className="fas fa-heart text-[30rem] rotate-12"></i>
         </div>
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 md:gap-16 items-center relative z-10">
           <div className="text-center lg:text-left">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
-              Join Our Volunteer Team
-            </h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">Join Our Volunteer Team</h2>
             <p className="text-lg md:text-xl text-red-100 mb-10 leading-relaxed">
-              Be part of the change. Our volunteers help us deliver care and
-              empowerment directly to those who need it.
+              Be part of the change. Our volunteers help us deliver care and empowerment directly to those who need it.
             </p>
-            <Link
-              to="/volunteer"
-              className="inline-block px-12 py-4 bg-orange-500 text-white font-black rounded-full shadow-xl hover:bg-orange-600 transition-all"
-            >
+            <Link to="/volunteer" className="inline-block px-12 py-4 bg-orange-500 text-white font-black rounded-full shadow-xl hover:bg-orange-600 transition-all">
               APPLY NOW
             </Link>
           </div>
           <div className="bg-white/10 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] border border-white/20">
-            <h4 className="text-xl md:text-2xl font-black mb-6 text-orange-400 uppercase tracking-tighter">
-              Fast-Track Interest
-            </h4>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Thanks! We'll contact you.");
-              }}
-            >
-              <input
-                type="text"
-                required
-                placeholder="Enter your full name"
-                className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400"
-              />
-              <input
-                type="email"
-                required
-                placeholder="Enter your email address"
-                className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400"
-              />
-              <button className="w-full py-4 bg-orange-600 font-black rounded-2xl hover:bg-orange-700 shadow-xl transition-colors uppercase text-xs tracking-widest">
-                SUBMIT
-              </button>
+            <h4 className="text-xl md:text-2xl font-black mb-6 text-orange-400 uppercase tracking-tighter">Fast-Track Interest</h4>
+            <form className="space-y-4" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget as HTMLFormElement;
+              const fd = new FormData(form);
+              const name = String(fd.get('name') || '').trim();
+              const email = String(fd.get('email') || '').trim();
+              if (!name || !email) return;
+              await addContactMessage({
+                name,
+                email,
+                message: 'Volunteer interest submitted from the homepage.',
+                category: 'Volunteer interest',
+              });
+              form.reset();
+              window.alert('Thanks. Your interest has been saved and the team can follow up from the dashboard.');
+            }}>
+              <input name="name" type="text" required placeholder="Enter your full name" className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400" />
+              <input name="email" type="email" required placeholder="Enter your email address" className="w-full bg-white/5 border border-white/20 rounded-2xl px-6 py-4 outline-none focus:border-orange-500 text-white placeholder:text-slate-400" />
+              <button className="w-full py-4 bg-orange-600 font-black rounded-2xl hover:bg-orange-700 shadow-xl transition-colors uppercase text-xs tracking-widest">SUBMIT</button>
             </form>
           </div>
         </div>

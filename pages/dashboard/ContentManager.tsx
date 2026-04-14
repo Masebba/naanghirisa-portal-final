@@ -10,10 +10,8 @@ const ContentManager: React.FC = () => {
   const handleSave = () => {
     setIsSaving(true);
     updatePageContent(content);
-    setTimeout(() => {
-      setIsSaving(false);
-      alert('Global website content updated successfully!');
-    }, 800);
+    setIsSaving(false);
+    alert('Global website content updated successfully!');
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

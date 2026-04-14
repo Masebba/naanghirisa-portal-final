@@ -17,11 +17,9 @@ const FeedbackManager: React.FC = () => {
     e.preventDefault();
     if (!formData.message) return;
     setFeedbackSent(true);
-    setTimeout(() => {
-       setFeedbackSent(false);
-       setFormData({ ...formData, message: '' });
-       alert("Your feedback has been logged directly with our leadership team. Thank you for your engagement.");
-    }, 2000);
+    setFeedbackSent(false);
+    setFormData({ ...formData, message: '' });
+    alert("Your feedback has been logged directly with our leadership team. Thank you for your engagement.");
   };
 
   if (!isAdmin) {

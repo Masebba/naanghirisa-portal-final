@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { COLORS } from '../constants';
-import { addVolunteerApplication } from '../services/mockData';
+import { addVolunteerApplication, getPageContent } from '../services/mockData';
 
 const Volunteer: React.FC = () => {
+  const content = getPageContent();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,9 +28,9 @@ const Volunteer: React.FC = () => {
         </div>
         <div className="relative z-10 mx-auto max-w-7xl px-4 text-center">
           <span className="mb-6 inline-block rounded-full bg-orange-600 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.25em]">Join the movement</span>
-          <h1 className="mb-8 text-5xl font-black uppercase tracking-tight md:text-7xl">Volunteer with Naanghirisa</h1>
+          <h1 className="mb-8 text-5xl font-black uppercase tracking-tight md:text-7xl">{content.volunteerHeroTitle || 'Volunteer with Naanghirisa'}</h1>
           <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-orange-50/80">
-            Your skills and passion can help transform lives in Butaleja.
+            {content.volunteerHeroDescription || 'Your skills and passion can help transform lives in Butaleja.'}
           </p>
         </div>
       </section>
@@ -79,7 +80,7 @@ const Volunteer: React.FC = () => {
           <div className="rounded-[3rem] border border-slate-100 bg-white p-8 shadow-2xl md:p-14">
             <div className="mb-12 text-center">
               <h2 className="mb-4 text-4xl font-black uppercase tracking-tight" style={{ color: COLORS.primary }}>Apply to volunteer</h2>
-              <p className="text-slate-500">Tell us a bit about yourself and your motivations.</p>
+              <p className="text-slate-500">{content.volunteerIntro || 'Tell us a bit about yourself and your motivations.'}</p>
             </div>
 
             {isSubmitted ? (

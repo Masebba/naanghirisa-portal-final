@@ -79,43 +79,32 @@ const DonationsManager: React.FC = () => {
 
   const handleProcessPayment = () => {
     if ((paymentMethod === 'MTN' || paymentMethod === 'AIRTEL') && phoneNumber.length < 10) {
-      alert("Please enter a valid Ugandan phone number (e.g., 077... or 070...)");
+      alert('Please enter a valid Ugandan phone number (e.g., 077... or 070...)');
       return;
     }
 
+    const campaignId = selectedCampaign === 'General' ? 'General' : (selectedCampaign as Campaign).id;
+    const campaignName = selectedCampaign === 'General' ? 'General Welfare' : (selectedCampaign as Campaign).name;
+
     setIsProcessing(true);
-    setProcessStatus(`Initiating ${paymentMethod} Secure Gateway...`);
+    setProcessStatus(`Recording ${paymentMethod || 'CARD'} contribution...`);
 
-    // Stage 1: Handshake
-    setTimeout(() => {
-      setProcessStatus("Awaiting Mobile Money PIN authorization on your handset...");
-      
-      // Stage 2: Authorization Simulation
-      setTimeout(() => {
-        setProcessStatus("PIN Verified. Confirming Ledger availability...");
-        
-        // Stage 3: Completion
-        setTimeout(() => {
-          const campaignId = selectedCampaign === 'General' ? 'General' : (selectedCampaign as Campaign).id;
-          const campaignName = selectedCampaign === 'General' ? 'General Welfare' : (selectedCampaign as Campaign).name;
+    const log: Donation = {
+      id: `d${Date.now()}`,
+      donorName: user?.name || 'Anonymous Donor',
+      amount: donorAmount,
+      category: selectedCampaign === 'General' ? 'General Fund' : 'Campaign Support',
+      campaignId,
+      description: `Contribution logged for ${campaignName}${phoneNumber ? ` from ${phoneNumber}` : ''}`,
+      date: new Date().toISOString().split('T')[0],
+      receiptImage: undefined,
+    };
 
-          const log: Donation = {
-            id: `d${Date.now()}`,
-            donorName: user?.name || 'Anonymous Donor',
-            amount: donorAmount,
-            category: selectedCampaign === 'General' ? 'General Fund' : 'Campaign Support',
-            campaignId: campaignId,
-            description: `Verified ${paymentMethod} contribution to ${campaignName}`,
-            date: new Date().toISOString().split('T')[0]
-          };
-
-          addDonation(log);
-          setDonations([...getDonations()]);
-          setIsProcessing(false);
-          setPaymentSuccess(true);
-        }, 1500);
-      }, 3000);
-    }, 1500);
+    addDonation(log);
+    setDonations([...getDonations()]);
+    setIsProcessing(false);
+    setProcessStatus('Contribution recorded successfully.');
+    setPaymentSuccess(true);
   };
 
   const anonymize = (name: string) => {

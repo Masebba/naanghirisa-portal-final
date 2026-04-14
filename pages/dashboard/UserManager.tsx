@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getUsers, updateUser, addUser, deleteUser, resetUserPassword } from '../../services/mockData';
+import { getUsers } from '../../services/mockData';
+import { userAdminService } from '../../services/userAdminService';
 import { COLORS } from '../../constants';
 import { User, UserRole } from '../../types';
 
@@ -21,7 +22,6 @@ const UserManager: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
-  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     setUsers([...getUsers()]);
@@ -42,13 +42,17 @@ const UserManager: React.FC = () => {
     });
   }, [users, filter, searchTerm]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingUser?.name || !editingUser.email || !editingUser.role) {
       window.alert('Please complete the name, email, and role fields.');
       return;
     }
 
     if (editingUser.id) {
+      if (editingUser.password) {
+        window.alert('Password changes use the reset-password flow on Spark plan.');
+        return;
+      }
       const updated: User = {
         ...editingUser,
         id: editingUser.id,
@@ -57,10 +61,9 @@ const UserManager: React.FC = () => {
         phone: editingUser.phone || '',
         role: editingUser.role,
         avatar: editingUser.avatar,
-        password: editingUser.password,
       } as User;
-      updateUser(updated);
-      setUsers(prev => prev.map(user => (user.id === updated.id ? updated : user)));
+      await userAdminService.updateUser(updated);
+      setUsers([...getUsers()]);
       window.alert(`Member profile for ${updated.name} updated.`);
     } else {
       if (!editingUser.password || editingUser.password.length < 8) {
@@ -76,31 +79,27 @@ const UserManager: React.FC = () => {
         password: editingUser.password,
         avatar: editingUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(editingUser.email || editingUser.name || Date.now().toString())}`,
       } as User;
-      addUser(newUser);
-      setUsers(prev => [...prev, newUser]);
-      window.alert(`User account created for ${newUser.name}.`);
+      const created = await userAdminService.createUser(newUser as User & { password: string });
+      setUsers([...getUsers()]);
+      window.alert(`User account created for ${(created as any).name || newUser.name}.`);
     }
 
     setEditingUser(null);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Permanently revoke this user access?')) {
-      deleteUser(id);
-      setUsers(prev => prev.filter(user => user.id !== id));
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Disable this user access? Their account will be marked inactive.')) {
+      await userAdminService.deleteUser(id);
+      setUsers([...getUsers()]);
     }
   };
 
-  const handlePasswordReset = () => {
+  const handlePasswordReset = async () => {
     if (!passwordResetUser) return;
-    if (newPassword.length < 8) {
-      window.alert('Password must be at least 8 characters long.');
-      return;
-    }
-    resetUserPassword(passwordResetUser.id, newPassword);
-    window.alert(`Password for ${passwordResetUser.name} has been updated.`);
+    await userAdminService.resetPassword(passwordResetUser.id);
+    setUsers([...getUsers()]);
+    window.alert(`A password reset email was sent to ${passwordResetUser.name}.`);
     setPasswordResetUser(null);
-    setNewPassword('');
   };
 
   return (
@@ -155,7 +154,7 @@ const UserManager: React.FC = () => {
             </div>
             <div>
               <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Email address</label>
-              <input className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500" value={editingUser.email || ''} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} placeholder="name@organisation.org" />
+              <input className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500 disabled:opacity-60" value={editingUser.email || ''} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} placeholder="name@organisation.org" disabled={Boolean(editingUser.id)} />
             </div>
             <div>
               <label className="mb-3 block text-[10px] font-black uppercase tracking-widest text-slate-400">Phone number</label>
@@ -177,7 +176,8 @@ const UserManager: React.FC = () => {
                 className="w-full rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 outline-none focus:ring-1 focus:ring-slate-500"
                 value={editingUser.password || ''}
                 onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
-                placeholder={editingUser.id ? 'Leave blank to keep current password' : 'Minimum 8 characters'}
+                placeholder={editingUser.id ? 'Password managed through reset email' : 'Minimum 8 characters'}
+                disabled={Boolean(editingUser.id)}
               />
             </div>
             <div className="flex items-end justify-start gap-2 pt-5">
@@ -194,19 +194,13 @@ const UserManager: React.FC = () => {
 
       {passwordResetUser && (
         <div className="rounded-lg border border-orange-100 bg-white p-5 shadow-xl">
-          <h3 className="text-lg font-black uppercase tracking-tight">Reset password for {passwordResetUser.name}</h3>
+          <h3 className="text-lg font-black uppercase tracking-tight">Send reset email to {passwordResetUser.name}</h3>
+          <p className="mt-3 text-sm text-slate-500">A secure password reset link will be sent to the account email on file.</p>
           <div className="mt-4 flex flex-col gap-3 md:flex-row">
-            <input
-              type="password"
-              className="w-full rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="Create a new password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-            />
             <button onClick={handlePasswordReset} className="rounded-lg bg-slate-900 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-black">
-              Update password
+              Send reset email
             </button>
-            <button onClick={() => { setPasswordResetUser(null); setNewPassword(''); }} className="rounded-lg bg-slate-100 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <button onClick={() => setPasswordResetUser(null)} className="rounded-lg bg-slate-100 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
               Cancel
             </button>
           </div>
@@ -255,7 +249,7 @@ const UserManager: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-10 py-4 text-right space-x-3">
-                    <button onClick={() => { setPasswordResetUser(user); setNewPassword(''); }} title="Reset password" className="text-slate-300 transition hover:text-orange-600"><i className="fas fa-key" /></button>
+                    <button onClick={() => setPasswordResetUser(user)} title="Reset password" className="text-slate-300 transition hover:text-orange-600"><i className="fas fa-key" /></button>
                     <button onClick={() => setEditingUser({ ...user })} title="Edit details" className="text-slate-300 transition hover:text-blue-600"><i className="fas fa-user-edit" /></button>
                     <button onClick={() => handleDelete(user.id)} title="Revoke access" className="text-slate-300 transition hover:text-red-600"><i className="fas fa-user-minus" /></button>
                   </td>

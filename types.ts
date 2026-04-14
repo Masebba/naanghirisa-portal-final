@@ -18,6 +18,7 @@ export interface User {
   phone?: string;
   location?: string;
   workDetails?: string;
+  status?: 'Active' | 'Disabled';
 }
 
 export interface VolunteerTask {
