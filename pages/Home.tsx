@@ -32,11 +32,11 @@ const Home: React.FC = () => {
       {/* ================= HERO SECTION ================= */}
       <section
         className="relative min-h-[70vh] md:min-h-[85vh] flex items-center overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(hsla(235, 48%, 5%, 0.85), rgba(16, 14, 22, 0.85).85)), url(${content.homeHeroImage || heroBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+  style={{
+    backgroundImage: `linear-gradient(rgba(15, 15, 15, 0.95), rgba(13, 14, 19, 0.91)), url(${content.homeHeroImage || heroBg})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
       >
         <div className="relative z-10 max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center text-white">
           <div className="text-center lg:text-left">
@@ -271,7 +271,7 @@ const Home: React.FC = () => {
       {/* Volunteer CTA */}
       <section
         className="py-20 relative overflow-hidden text-white"
-        style={{ backgroundColor: COLORS.primary }}
+        style={{ backgroundColor: COLORS.tertiary }}
       >
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 hidden lg:block">
           <i className="fas fa-heart text-[30rem] rotate-12"></i>
