@@ -33,7 +33,7 @@ const Home: React.FC = () => {
       <section
         className="relative min-h-[70vh] md:min-h-[85vh] flex items-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(hsla(0, 100%, 17%, 0.85), rgba(88,0,0,0.85)), url(${content.homeHeroImage || heroBg})`,
+          backgroundImage: `linear-gradient(hsla(235, 48%, 5%, 0.85), rgba(16, 14, 22, 0.85).85)), url(${content.homeHeroImage || heroBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
