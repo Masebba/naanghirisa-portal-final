@@ -4,7 +4,7 @@ import { COLORS } from '../constants';
 import { notify } from '../services/notifications';
 import { getPageContent, subscribeStoreUpdates } from '../services/mockData';
 import { authService } from '../services/authService';
-import { addDonation, addNotification, getCampaigns, getPrograms } from '../services/mockData';
+import { addDonation, getCampaigns, getPrograms } from '../services/mockData';
 import { Campaign, Program } from '../types';
 
 type PaymentMethod = 'MTN' | 'AIRTEL' | 'CARD';
@@ -53,7 +53,7 @@ const Donate: React.FC = () => {
     const targetLabel = selectedTarget.type === 'General' ? 'General Welfare' : selectedTarget.name;
     const targetId = selectedTarget.type === 'General' ? 'General' : selectedTarget.id;
 
-    const donationRecord = {
+    addDonation({
       id: `donation_${Date.now()}`,
       donorName: finalName,
       amount,
@@ -66,17 +66,7 @@ const Donate: React.FC = () => {
       paymentMethod: paymentMethod || 'CARD',
       phoneNumber: phone,
       status: 'Recorded',
-    } as any;
-
-    addDonation(donationRecord);
-    if (user?.id) {
-      addNotification({
-        userId: user.id,
-        title: 'Donation recorded',
-        message: `Your contribution to ${targetLabel} was recorded successfully.`,
-        type: 'general',
-      });
-    }
+    } as any);
 
     setReceipt({ reference: `NAA-${Date.now()}`, target: targetLabel });
     setStep(4);
