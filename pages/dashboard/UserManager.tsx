@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getUsers } from '../../services/mockData';
 import { userAdminService } from '../../services/userAdminService';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
+import { downloadCsv, downloadJson } from '../../services/fileExport';
+import { paginate } from '../../services/tableUtils';
 import { User, UserRole } from '../../types';
 
 type FilterType = 'All' | 'Admins' | 'Donors' | 'Volunteers';
@@ -23,6 +26,8 @@ const UserManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   useEffect(() => {
     setUsers([...getUsers()]);
@@ -43,15 +48,21 @@ const UserManager: React.FC = () => {
     });
   }, [users, filter, searchTerm]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+  const { pageItems: pagedUsers, totalPages } = paginate<User>(filteredUsers, currentPage, pageSize);
+
   const handleSave = async () => {
     if (!editingUser?.name || !editingUser.email || !editingUser.role) {
-      window.alert('Please complete the name, email, and role fields.');
+      notify('Please complete the name, email, and role fields.');
       return;
     }
 
     if (editingUser.id) {
       if (editingUser.password) {
-        window.alert('Password changes use the reset-password flow on Spark plan.');
+        notify('Password changes use the reset-password flow on Spark plan.');
         return;
       }
       const updated: User = {
@@ -65,10 +76,10 @@ const UserManager: React.FC = () => {
       } as User;
       await userAdminService.updateUser(updated);
       setUsers([...getUsers()]);
-      window.alert(`Member profile for ${updated.name} updated.`);
+      notify(`Member profile for ${updated.name} updated.`);
     } else {
       if (!editingUser.password || editingUser.password.length < 8) {
-        window.alert('Please set a password with at least 8 characters.');
+        notify('Please set a password with at least 8 characters.');
         return;
       }
       const newUser: User = {
@@ -82,7 +93,7 @@ const UserManager: React.FC = () => {
       } as User;
       const created = await userAdminService.createUser(newUser as User & { password: string });
       setUsers([...getUsers()]);
-      window.alert(`User account created for ${(created as any).name || newUser.name}.`);
+      notify(`User account created for ${(created as any).name || newUser.name}.`);
     }
 
     setEditingUser(null);
@@ -99,7 +110,7 @@ const UserManager: React.FC = () => {
     if (!passwordResetUser) return;
     await userAdminService.resetPassword(passwordResetUser.id);
     setUsers([...getUsers()]);
-    window.alert(`A password reset email was sent to ${passwordResetUser.name}.`);
+    notify(`A password reset email was sent to ${passwordResetUser.name}.`);
     setPasswordResetUser(null);
   };
 
@@ -110,12 +121,33 @@ const UserManager: React.FC = () => {
           <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>Personnel & access control</h2>
           <p className="mt-1 text-xs font-bold tracking-widest text-slate-400">Manage organisational members and portal roles</p>
         </div>
-        <button
-          onClick={() => { setShowPassword(false); setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN, password: '' }); }}
-          className="rounded-lg bg-slate-900 px-6 py-3 text-[10px] font-black tracking-widest text-white transition hover:bg-black"
-        >
-          Add new user
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => downloadJson('users-backup', filteredUsers)}
+            className="rounded-lg border border-slate-200 bg-white px-5 py-3 text-[10px] font-black tracking-widest text-slate-600 transition hover:bg-slate-50"
+          >
+            Backup JSON
+          </button>
+          <button
+            onClick={() => downloadCsv('users-backup', filteredUsers.map(user => ({
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              phone: user.phone || '',
+              status: user.status || 'Active',
+            })))}
+            className="rounded-lg border border-slate-200 bg-white px-5 py-3 text-[10px] font-black tracking-widest text-slate-600 transition hover:bg-slate-50"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => { setShowPassword(false); setEditingUser({ name: '', email: '', phone: '', role: UserRole.STAFF_ADMIN, password: '' }); }}
+            className="rounded-lg bg-slate-900 px-6 py-3 text-[10px] font-black tracking-widest text-white transition hover:bg-black"
+          >
+            Add new user
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm md:flex-row">
@@ -225,7 +257,7 @@ const UserManager: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredUsers.map(user => (
+              {pagedUsers.map(user => (
                 <tr key={user.id} className="transition hover:bg-slate-50/70">
                   <td className="px-8 py-4">
                     <div className="flex items-center gap-3">
@@ -270,6 +302,15 @@ const UserManager: React.FC = () => {
             <button onClick={() => { setFilter('All'); setSearchTerm(''); }} className="mt-4 text-[10px] font-bold uppercase text-orange-600 hover:underline">
               Clear filters
             </button>
+          </div>
+        )}
+        {filteredUsers.length > pageSize && (
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-8 py-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Page {currentPage} of {totalPages}</p>
+            <div className="flex gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Prev</button>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Next</button>
+            </div>
           </div>
         )}
       </div>

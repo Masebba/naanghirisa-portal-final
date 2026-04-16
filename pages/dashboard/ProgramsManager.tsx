@@ -3,15 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { getPrograms, addProgram, updateProgram, deleteProgram } from '../../services/mockData';
 import { Program } from '../../types';
 import { COLORS } from '../../constants';
+import { downloadJson } from '../../services/fileExport';
+import { paginate, matchesSearch } from '../../services/tableUtils';
 
 const ProgramsManager: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Program>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     setPrograms([...getPrograms()]);
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,6 +59,9 @@ const ProgramsManager: React.FC = () => {
     setFormData(p);
   };
 
+  const filteredPrograms = programs.filter(p => matchesSearch([p.name, p.description, p.type, p.status], searchTerm));
+  const { pageItems: visiblePrograms, totalPages } = paginate<Program>(filteredPrograms, currentPage, pageSize);
+
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this program?')) {
       deleteProgram(id);
@@ -61,12 +73,15 @@ const ProgramsManager: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>Manage Programs</h2>
-        <button 
-          onClick={() => { setEditingId('new'); setFormData({}); }}
-          className="px-6 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-all text-sm uppercase tracking-widest"
-        >
-          Add New Program
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => downloadJson('programs-backup', programs)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm uppercase tracking-widest">Backup JSON</button>
+          <button 
+            onClick={() => { setEditingId('new'); setFormData({}); }}
+            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-all text-sm uppercase tracking-widest"
+          >
+            Add New Program
+          </button>
+        </div>
       </div>
 
       {editingId && (
@@ -133,6 +148,13 @@ const ProgramsManager: React.FC = () => {
         </div>
       )}
 
+      <div className="flex justify-end">
+        <div className="w-full max-w-sm relative">
+          <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search programs" className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm outline-none focus:border-orange-500" />
+        </div>
+      </div>
+
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-100">
@@ -144,7 +166,7 @@ const ProgramsManager: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {programs.map(p => (
+            {visiblePrograms.map(p => (
               <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-10 py-6">
                   <div className="flex items-center gap-4">
@@ -164,6 +186,15 @@ const ProgramsManager: React.FC = () => {
             ))}
           </tbody>
         </table>
+        {filteredPrograms.length > pageSize && (
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-8 py-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Page {currentPage} of {totalPages}</p>
+            <div className="flex gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Prev</button>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

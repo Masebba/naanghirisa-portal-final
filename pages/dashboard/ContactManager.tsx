@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPageContent, subscribeStoreUpdates, updatePageContent } from '../../services/mockData';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 
 const ContactManager: React.FC = () => {
   const [content, setContent] = useState(getPageContent());
@@ -12,7 +13,7 @@ const ContactManager: React.FC = () => {
     setIsSaving(true);
     updatePageContent(content);
     setIsSaving(false);
-    alert('Contact information updated across the platform!');
+    notify('Contact information updated across the platform!');
   };
 
   return (

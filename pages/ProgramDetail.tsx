@@ -1,13 +1,13 @@
 
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockPrograms } from '../services/mockData';
+import { getPrograms } from '../services/mockData';
 import { COLORS } from '../constants';
 
 const ProgramDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const program = mockPrograms.find((p) => p.id === id);
+  const program = getPrograms().find((p) => p.id === id);
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -260,16 +260,15 @@ const About: React.FC = () => {
                           w-4 h-4 rounded-full bg-orange-500 border-4 border-white z-10" />
 
                   {/* Card */}
-                  <div className="ml-12 bg-[#FFF7F1] rounded-xl shadow-xl p-4 overflow-hidden shadow-xl hover:scale-105 transition-all hover:shadow-2xl
-                  ">
-                    <div className="grid md:grid-cols-[15%_85%] gap-4 items-center">
+                  <div className="group ml-12 bg-white rounded-2xl border border-slate-100 shadow-lg p-4 overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-2xl hover:border-orange-200">
+                    <div className="grid md:grid-cols-[18%_82%] gap-4 items-center">
 
                       {/* Image */}
                       <div className="w-full">
                         <img
                           src={item.image}
                           alt={item.title}
-                          className="w-full h-20 md:h-26 object-cover rounded-xl shadow-md border"
+                          className="w-full h-20 md:h-26 object-cover rounded-xl shadow-md border transition-transform duration-700 ease-out group-hover:scale-105"
                         />
                       </div>
 
@@ -310,15 +309,18 @@ const About: React.FC = () => {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 max-w-7xl mx-auto px-4 mb-20">
           {(getLeaders().length ? getLeaders() : fallbackLeaders.map(l => ({ ...l, profile: l.experience } as any))).map((leader, i) => (
-            <div key={i} className="bg-white text-center p-4 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl hover:bg-[#FFF7F1]">
-              <img
-                src={leader.image}
-                alt={leader.name}
-                className="w-28 h-28 mx-auto rounded-full object-cover shadow-lg mb-4"
-              />
-              <h4 className="font-black">{leader.name}</h4>
-              <p className="text-orange-600 text-xs font-bold uppercase">{leader.role}</p>
-              <p className="text-slate-600 text-sm mt-2">{leader.profile}</p>
+            <div key={i} className="group bg-white text-center p-5 rounded-3xl overflow-hidden border border-slate-100 shadow-lg transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl hover:border-orange-200">
+              <div className="relative mb-5 mx-auto w-28 h-28">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-100 to-slate-100 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <img
+                  src={leader.image}
+                  alt={leader.name}
+                  className="relative z-10 w-28 h-28 mx-auto rounded-full object-cover shadow-lg border-4 border-white transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+              </div>
+              <h4 className="font-black text-slate-900">{leader.name}</h4>
+              <p className="text-orange-600 text-[10px] font-black uppercase tracking-[0.25em] mt-1">{leader.role}</p>
+              <p className="text-slate-600 text-sm mt-3 leading-relaxed">{leader.profile}</p>
             </div>
           ))}
         </div>

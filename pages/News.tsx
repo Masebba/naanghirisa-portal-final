@@ -1,9 +1,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getPageContent, mockNews, subscribeStoreUpdates } from '../services/mockData';
+import { getNews, getPageContent, subscribeStoreUpdates } from '../services/mockData';
 import { authService } from '../services/authService';
 import { COLORS } from '../constants';
+import { notify } from '../services/notifications';
 import { UserRole } from '../types';
 
 const News: React.FC = () => {
@@ -19,7 +20,7 @@ const News: React.FC = () => {
   const categories = ['All', 'Announcement', 'Event', 'Impact Story', 'Update'];
 
   const filteredNews = useMemo(() => {
-    return mockNews.filter((post) => {
+    return getNews().filter((post) => {
       const matchesSearch = 
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,7 +40,7 @@ const News: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      window.alert(`Deleting post ${id}. In a production deployment this would call the CMS API.`);
+      notify(`Deleting post ${id}. In a production deployment this would call the CMS API.`);
     }
   };
 
@@ -197,7 +198,7 @@ const News: React.FC = () => {
                  </p>
               </div>
               <div>
-                 <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => { e.preventDefault(); alert('Subscribed successfully!'); }}>
+                 <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => { e.preventDefault(); notify('Subscribed successfully!'); }}>
                     <input 
                       type="email" 
                       required

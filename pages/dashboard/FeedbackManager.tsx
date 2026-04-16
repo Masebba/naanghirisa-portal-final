@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 import { authService } from '../../services/authService';
 import { addContactMessage, deleteFeedbackMessage, getFeedback, subscribeStoreUpdates, updateFeedbackMessage } from '../../services/mockData';
 import { UserRole } from '../../types';
@@ -72,7 +73,7 @@ const FeedbackManager: React.FC = () => {
   const openReply = (msg: any) => {
     const targetEmail = msg.replyTo || msg.email;
     if (!targetEmail) {
-      alert('This message has no email address attached.');
+      notify('This message has no email address attached.');
       return;
     }
     const subject = `Re: ${msg.subject || msg.category || 'Your message'}`;

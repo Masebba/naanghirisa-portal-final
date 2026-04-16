@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 import { authService } from '../../services/authService';
 import { uploadImageFile } from '../../services/imageUpload';
 import { User } from '../../types';
@@ -246,7 +247,7 @@ const ProfileSettings: React.FC = () => {
           <p className="text-xs text-slate-400 mt-1">Portal permission level: <span className="font-bold text-orange-600 uppercase tracking-widest">{initialUser.role.replace('_', ' ')}</span></p>
         </div>
         <div className="flex gap-3">
-          <button type="button" onClick={() => alert('Contact Super Admin to reset account metadata.')} className="px-4 py-2 bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-200 transition-all">Reset meta</button>
+          <button type="button" onClick={() => notify('Contact Super Admin to reset account metadata.')} className="px-4 py-2 bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-200 transition-all">Reset meta</button>
           <button type="button" className="px-4 py-2 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-lg hover:bg-black transition-all shadow-lg">Two-factor security</button>
         </div>
       </div>

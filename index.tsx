@@ -1,15 +1,8 @@
 import React from 'react';
+import './index.css';
 import ReactDOM from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import { notify } from './services/notifications';
-
-if (typeof window !== 'undefined') {
-  window.alert = ((message?: unknown) => {
-    const text = typeof message === 'string' ? message : 'Action completed.';
-    notify(text, 'info');
-  }) as typeof window.alert;
-}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -18,8 +11,8 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <App />
-    </HashRouter>
+    </BrowserRouter>
   </React.StrictMode>,
 );

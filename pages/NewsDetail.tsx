@@ -1,16 +1,16 @@
 
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockNews } from '../services/mockData';
+import { getNews } from '../services/mockData';
 import { COLORS } from '../constants';
 
 const NewsDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const post = mockNews.find((n) => n.id === id);
+  const post = getNews().find((n) => n.id === id);
 
   // Get related news (excluding current)
-  const relatedNews = mockNews
+  const relatedNews = getNews()
     .filter((n) => n.id !== id && (n.category === post?.category || n.tags.some(t => post?.tags.includes(t))))
     .slice(0, 3);
 
@@ -168,7 +168,7 @@ const NewsDetail: React.FC = () => {
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
-               {mockNews.slice(0, 3).map(n => (
+               {getNews().slice(0, 3).map(n => (
                  <Link key={n.id} to={`/news/${n.id}`} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all group">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{n.date}</p>
                     <h4 className="text-xl font-black text-slate-900 mb-4 line-clamp-2 group-hover:text-orange-600 transition-colors leading-tight">

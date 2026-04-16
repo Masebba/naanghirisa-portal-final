@@ -15,7 +15,8 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
-import { createAuthUser } from "./authApi";
+import { recordAuditEvent } from './auditService';
+import { portalFunctions } from "./portalFunctions";
 import {
   Campaign,
   Donation,
@@ -158,7 +159,7 @@ const normalizeUser = (data: DocumentData, id: string): User => ({
   name: toStringValue(data.name),
   email: toStringValue(data.email),
   phone: toStringValue(data.phone),
-  role: (data.role as UserRole) || UserRole.VOLUNTEER,
+  role: Object.values(UserRole).includes(data.role as UserRole) ? (data.role as UserRole) : UserRole.VOLUNTEER,
   avatar: toStringValue(data.avatar),
   location: toStringValue(data.location),
   workDetails: toStringValue(data.workDetails),
@@ -318,28 +319,12 @@ export const subscribeStoreUpdates = (listener: () => void) => {
   return () => storeListeners.delete(listener);
 };
 
-export let mockPrograms: Program[] = [];
-export let mockCampaigns: Campaign[] = [];
-export let mockNews: NewsPost[] = [];
-export let mockDonations: Donation[] = [];
-export const mockPartners: Partner[] = [];
-export let mockLeaders: Leader[] = [];
-export let mockStudents: Student[] = [];
-
-
 let publicListenersStarted = false;
 let privateListenersStarted = false;
 
 const isAdminRole = (role: unknown) => [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(role as UserRole);
 
 const syncLegacyExports = () => {
-
-  mockPrograms = programs;
-  mockCampaigns = campaigns;
-  mockNews = news;
-  mockDonations = donations;
-  mockLeaders = leaders;
-  mockStudents = [];
   notifyStoreChange();
 };
 
@@ -469,14 +454,16 @@ const startPublicListeners = () => {
 
 startPublicListeners();
 
-const persistDoc = async (collectionName: string, id: string, data: Record<string, unknown>) => {
+const persistDoc = async (collectionName: string, id: string, data: Record<string, unknown>, action: 'create' | 'update' = 'update') => {
   if (!db || !isFirebaseConfigured) return;
   await setDoc(doc(db, collectionName, id), { ...data, updatedAt: nowIso(), createdAt: data.createdAt || nowIso() }, { merge: true });
+  void recordAuditEvent({ action, entity: collectionName, entityId: id, label: collectionName, after: data });
 };
 
 const deleteById = async (collectionName: string, id: string) => {
   if (!db || !isFirebaseConfigured) return;
   await deleteDoc(doc(db, collectionName, id));
+  void recordAuditEvent({ action: 'delete', entity: collectionName, entityId: id, label: collectionName });
 };
 
 const bumpCampaignAmount = async (campaignId: string | undefined, amountDelta: number) => {
@@ -547,13 +534,13 @@ export const addProgram = (program: Program) => {
   programs = sortByNewest([{ ...program, updatedAt: nowIso(), createdAt: nowIso() } as Program & Timestamped, ...programs.filter(item => item.id !== program.id)] as any);
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("programs", program.id, program as any);
+  void persistDoc("programs", program.id, program as any, "create");
 };
 export const updateProgram = (program: Program) => {
   programs = programs.map(item => (item.id === program.id ? { ...program, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("programs", program.id, program as any);
+  void persistDoc("programs", program.id, program as any, "create");
 };
 export const deleteProgram = (id: string) => {
   programs = programs.filter(item => item.id !== id);
@@ -566,13 +553,13 @@ export const addCampaign = (campaign: Campaign) => {
   campaigns = sortByNewest([{ ...campaign, updatedAt: nowIso(), createdAt: nowIso() } as any, ...campaigns.filter(item => item.id !== campaign.id)]);
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("campaigns", campaign.id, campaign as any);
+  void persistDoc("campaigns", campaign.id, campaign as any, "create");
 };
 export const updateCampaign = (campaign: Campaign) => {
   campaigns = campaigns.map(item => (item.id === campaign.id ? { ...campaign, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("campaigns", campaign.id, campaign as any);
+  void persistDoc("campaigns", campaign.id, campaign as any, "create");
 };
 export const deleteCampaign = (id: string) => {
   campaigns = campaigns.filter(item => item.id !== id);
@@ -582,12 +569,22 @@ export const deleteCampaign = (id: string) => {
 
 export const getDonations = () => donations;
 export const addDonation = (donation: Donation) => {
-  donations = sortByNewest([{ ...donation, updatedAt: nowIso(), createdAt: nowIso() } as any, ...donations.filter(item => item.id !== donation.id)]);
+  const saved = { ...donation, updatedAt: nowIso(), createdAt: nowIso() } as any;
+  donations = sortByNewest([saved, ...donations.filter(item => item.id !== donation.id)]);
   syncLegacyExports();
-  void persistDoc("donations", donation.id, donation as any);
+  void persistDoc("donations", donation.id, saved, "create");
   void bumpCampaignAmount(donation.campaignId, donation.amount);
   void updateTotals();
   notifyStoreChange();
+  const userId = String((donation as any).userId || '').trim();
+  if (userId) {
+    addNotification({
+      userId,
+      title: "Donation recorded",
+      message: `${donation.donorName} contribution of $${donation.amount.toLocaleString()} was saved.`,
+      type: "general",
+    });
+  }
 };
 
 export const getNews = () => news;
@@ -595,13 +592,13 @@ export const addNews = (post: NewsPost) => {
   news = sortByNewest([{ ...post, updatedAt: nowIso(), createdAt: nowIso() } as any, ...news.filter(item => item.id !== post.id)]);
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("news", post.id, post as any);
+  void persistDoc("news", post.id, post as any, "create");
 };
 export const updateNews = (post: NewsPost) => {
   news = news.map(item => (item.id === post.id ? { ...post, updatedAt: nowIso() } as any : item));
   syncLegacyExports();
   notifyStoreChange();
-  void persistDoc("news", post.id, post as any);
+  void persistDoc("news", post.id, post as any, "create");
 };
 export const deleteNews = (id: string) => {
   news = news.filter(item => item.id !== id);
@@ -617,7 +614,7 @@ export const addUser = (user: User) => {
     return rest as User;
   })() : profile;
   users = sortByNewest([{ ...persistedUser, updatedAt: nowIso(), createdAt: nowIso() } as any, ...users.filter(item => item.id !== user.id)]);
-  if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any);
+  if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any, "update");
   notifyStoreChange();
   return persistedUser;
 };
@@ -627,7 +624,7 @@ export const updateUser = (user: User) => {
     return rest as User;
   })() : user;
   users = users.map(item => (item.id === user.id ? { ...item, ...persistedUser, updatedAt: nowIso() } : item));
-  if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any);
+  if (isFirebaseConfigured) void persistDoc("users", user.id, persistedUser as any, "create");
   notifyStoreChange();
 };
 export const deleteUser = (id: string) => {
@@ -643,13 +640,13 @@ export const resetUserPassword = (id: string, newPassword: string) => {
 export const getExpenditures = () => expenditures;
 export const addExpenditure = (expenditure: Expenditure) => {
   expenditures = sortByNewest([{ ...expenditure, updatedAt: nowIso(), createdAt: nowIso() } as any, ...expenditures.filter(item => item.id !== expenditure.id)]);
-  void persistDoc("expenditures", expenditure.id, expenditure as any);
+  void persistDoc("expenditures", expenditure.id, expenditure as any, "create");
   void updateTotals();
   notifyStoreChange();
 };
 export const updateExpenditure = (expenditure: Expenditure) => {
   expenditures = expenditures.map(item => (item.id === expenditure.id ? { ...expenditure, updatedAt: nowIso() } as any : item));
-  void persistDoc("expenditures", expenditure.id, expenditure as any);
+  void persistDoc("expenditures", expenditure.id, expenditure as any, "create");
   void updateTotals();
   notifyStoreChange();
 };
@@ -657,7 +654,7 @@ export const updateExpenditure = (expenditure: Expenditure) => {
 export const getOtherIncome = () => otherIncome;
 export const addOtherIncome = (income: OtherIncome) => {
   otherIncome = sortByNewest([{ ...income, updatedAt: nowIso(), createdAt: nowIso() } as any, ...otherIncome.filter(item => item.id !== income.id)]);
-  void persistDoc("otherIncome", income.id, income as any);
+  void persistDoc("otherIncome", income.id, income as any, "create");
   void updateTotals();
   notifyStoreChange();
 };
@@ -684,7 +681,7 @@ export const addVolunteerApplication = (application: any) => {
   };
   volunteers = sortByNewest([newVolunteer, ...volunteers.filter(item => item.id !== newVolunteer.id)]);
   notifyStoreChange();
-  void persistDoc("volunteers", newVolunteer.id, newVolunteer as any);
+  void persistDoc("volunteers", newVolunteer.id, newVolunteer as any, "create");
   return newVolunteer;
 };
 export const updateVolunteerStatus = (id: string, status: string, changes: Partial<VolunteerRecord> = {}) => {
@@ -702,28 +699,18 @@ export const acceptVolunteerApplication = async (id: string) => {
     throw new Error("Volunteer email is required to create an account.");
   }
 
-  const created = await createAuthUser({
-    email: application.email.trim().toLowerCase(),
-    password: VOLUNTEER_DEFAULT_PASSWORD,
-    displayName: application.name,
-    photoURL: application.avatar || "",
-  });
-
-  const accountId = created.localId;
-  const portalUser = {
-    id: accountId,
+  const created = await portalFunctions.createPortalUser({
     name: application.name,
     email: application.email.trim().toLowerCase(),
     phone: application.phone || "",
     role: UserRole.VOLUNTEER,
-    avatar: application.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(application.email || application.name || accountId)}`,
+    password: VOLUNTEER_DEFAULT_PASSWORD,
+    avatar: application.avatar || "",
     location: application.location || "",
     workDetails: application.interests || application.message || "",
-    status: "Active",
-  } as User;
+  });
 
-  await persistDoc("users", accountId, portalUser as any);
-
+  const accountId = String(created.id);
   const updatedApplication = {
     ...application,
     status: "Approved",
@@ -818,7 +805,7 @@ export const getTaskLibrary = () => taskLibrary;
 export const addLibraryTask = (task: LibraryTask) => {
   const next = { ...task, id: task.id || `lib_${Date.now()}` };
   taskLibrary = sortByNewest([next as any, ...taskLibrary.filter(item => item.id !== next.id)]);
-  void persistDoc("taskLibrary", next.id, next as any);
+  void persistDoc("taskLibrary", next.id, next as any, "create");
   notifyStoreChange();
 };
 export const deleteLibraryTask = (id: string) => {
@@ -836,7 +823,7 @@ export const addNotification = (notification: Omit<Notification, 'id' | 'read' |
     date: today(),
   };
   notifications = sortByNewest([created, ...notifications]);
-  void persistDoc("notifications", created.id, created as any);
+  void persistDoc("notifications", created.id, created as any, "create");
   notifyStoreChange();
   return created;
 };
@@ -852,7 +839,7 @@ export const updateFeedbackMessage = (id: string, changes: Partial<FeedbackRecor
   feedback = feedback.map(item => item.id === id ? { ...item, ...changes, updatedAt: nowIso() } as any : item);
   contactMessages = contactMessages.map(item => item.id === id ? { ...item, ...changes, updatedAt: nowIso() } as any : item);
   notifyStoreChange();
-  void persistDoc('feedback', id, feedback.find(item => item.id === id) as any);
+  void persistDoc('feedback', id, feedback.find(item => item.id === id) as any, 'update');
 };
 
 export const deleteFeedbackMessage = (id: string) => {
@@ -867,7 +854,7 @@ export const addLeader = (leader: Leader) => {
   const next = { ...leader, id: leader.id || `leader_${Date.now()}` };
   leaders = sortByNewest([next as any, ...leaders.filter(item => item.id !== next.id)]);
   syncLegacyExports();
-  void persistDoc('leaders', next.id, next as any);
+  void persistDoc('leaders', next.id, next as any, 'create');
 };
 export const updateLeader = (leader: Leader) => {
   leaders = leaders.map(item => (item.id === leader.id ? { ...leader, updatedAt: nowIso() } as any : item));
@@ -894,7 +881,7 @@ export const addContactMessage = (message: Omit<FeedbackRecord, 'id' | 'date' | 
   contactMessages = sortByNewest([created, ...contactMessages]);
   feedback = sortByNewest([created, ...feedback]);
   notifyStoreChange();
-  void persistDoc('feedback', created.id, created as any);
+  void persistDoc('feedback', created.id, created as any, 'create');
   return created;
 };
 export const getContactMessages = () => contactMessages;

@@ -1,8 +1,9 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { createAuthUser } from './authApi';
 import { authService } from './authService';
+import { portalFunctions } from './portalFunctions';
 import { db, isFirebaseConfigured } from './firebase';
 import { User, UserRole } from '../types';
+import { recordAuditEvent } from './auditService';
 
 const normalizePhone = (value?: string) => (value || '').replace(/\s+/g, '').replace(/-/g, '').trim();
 
@@ -41,29 +42,24 @@ export const userAdminService = {
       throw new Error('Select a valid role.');
     }
 
-    const created = await createAuthUser({
+    const result = await portalFunctions.createPortalUser({
+      name: user.name,
       email: user.email.trim().toLowerCase(),
+      phone: user.phone || '',
+      role: user.role,
       password: user.password,
-      displayName: user.name,
-      photoURL: user.avatar,
+      avatar: user.avatar || '',
+      location: user.location || '',
+      workDetails: user.workDetails || '',
     });
-
-    const uid = created.localId;
-    await saveUserDoc({
-      ...user,
-      id: uid,
-      email: user.email.trim().toLowerCase(),
-      status: 'Active',
-      avatar: user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.email || user.name || uid)}`,
-    });
-
-    return { success: true, id: uid };
+    void recordAuditEvent({ action: 'create', entity: 'user', label: user.email, after: user });
+    return result;
   },
 
   updateUser: async (user: User & { password?: string }) => {
     const existing = authService.getCurrentUser();
     if (user.password) {
-      throw new Error('Password changes must use the reset password action on Spark plan.');
+      throw new Error('Password changes must use the reset password action.');
     }
 
     if (!user.id) {
@@ -71,7 +67,7 @@ export const userAdminService = {
     }
 
     if (existing && existing.id === user.id) {
-      await authService.updateCurrentUser({
+      const result = await authService.updateCurrentUser({
         ...existing,
         name: user.name,
         phone: user.phone || '',
@@ -80,6 +76,7 @@ export const userAdminService = {
         workDetails: user.workDetails || '',
         role: existing.role,
       });
+      void recordAuditEvent({ action: 'update', entity: 'user', entityId: user.id, label: user.email, after: user });
       return { success: true };
     }
 
@@ -94,10 +91,10 @@ export const userAdminService = {
     const storedEmail = (storedData?.email || '').trim().toLowerCase();
 
     if (currentDoc?.id !== user.id && storedEmail && storedEmail !== incomingEmail) {
-      throw new Error('Email updates are not supported from the dashboard on Spark plan. Create a replacement account instead.');
+      throw new Error('Email updates are not supported from the dashboard. Create a replacement account instead.');
     }
 
-    const safeUpdate: User = {
+    const result = await portalFunctions.updatePortalUser({
       id: user.id,
       name: user.name,
       email: currentDoc?.id === user.id ? incomingEmail : storedEmail || incomingEmail,
@@ -106,11 +103,9 @@ export const userAdminService = {
       avatar: user.avatar || '',
       location: user.location || '',
       workDetails: user.workDetails || '',
-      status: user.status || 'Active',
-    };
-
-    await saveUserDoc(safeUpdate);
-    return { success: true };
+    });
+    void recordAuditEvent({ action: 'update', entity: 'user', entityId: user.id, label: user.email, after: user });
+    return result;
   },
 
   deleteUser: async (id: string) => {
@@ -123,16 +118,9 @@ export const userAdminService = {
       throw new Error('You cannot disable your own active session from here.');
     }
 
-    await setDoc(
-      doc(db, 'users', id),
-      {
-        status: 'Disabled',
-        updatedAt: new Date().toISOString(),
-        deletedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
-    return { success: true };
+    const result = await portalFunctions.deletePortalUser({ id });
+    void recordAuditEvent({ action: 'delete', entity: 'user', entityId: id, label: current?.email || id });
+    return result;
   },
 
   resetPassword: async (id: string) => {
@@ -151,6 +139,7 @@ export const userAdminService = {
     }
 
     await authService.sendPasswordReset(data.email);
+    void recordAuditEvent({ action: 'password_reset', entity: 'user', entityId: id, label: data.email });
     return { success: true };
   },
 };

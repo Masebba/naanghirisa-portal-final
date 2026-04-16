@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCampaigns, addCampaign, updateCampaign, deleteCampaign } from '../../services/mockData';
 import { Campaign, UserRole } from '../../types';
+import { downloadJson } from '../../services/fileExport';
 import { COLORS } from '../../constants';
 import { authService } from '../../services/authService';
 
@@ -61,7 +62,7 @@ const CampaignsManager: React.FC = () => {
   };
 
   const handleShare = (camp: Campaign, platform: string) => {
-      const shareUrl = `${window.location.origin}/#/campaigns/${camp.id}`;
+      const shareUrl = `${window.location.origin}/campaigns/${camp.id}`;
       const text = `Join me in supporting Naanghirisa's mission: ${camp.name}. Help us reach our goal of $${camp.targetAmount}!`;
       
       let url = '';
@@ -83,14 +84,17 @@ const CampaignsManager: React.FC = () => {
             {isAdminOrStaff ? 'Manage direct community funding initiatives' : 'Share our goals with your network and help us drive impact'}
           </p>
         </div>
-        {isAdminOrStaff && (
-          <button 
-            onClick={() => { setEditingId('new'); setFormData({}); }}
-            className="px-6 py-3 bg-orange-600 text-white font-black rounded-xl hover:bg-orange-700 transition-all text-[10px] uppercase tracking-widest"
-          >
-            Create Campaign
-          </button>
-        )}
+        <div className="flex gap-3">
+          <button onClick={() => downloadJson('campaigns-backup', campaigns)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] uppercase tracking-widest">Backup JSON</button>
+          {isAdminOrStaff && (
+            <button 
+              onClick={() => { setEditingId('new'); setFormData({}); }}
+              className="px-6 py-3 bg-orange-600 text-white font-black rounded-xl hover:bg-orange-700 transition-all text-[10px] uppercase tracking-widest"
+            >
+              Create Campaign
+            </button>
+          )}
+        </div>
       </div>
 
       {isAdminOrStaff && editingId && (

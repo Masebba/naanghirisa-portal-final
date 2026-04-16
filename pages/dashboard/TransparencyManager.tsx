@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { getPageContent, updatePageContent, getExpenditures, getDonations, getOtherIncome } from '../../services/mockData';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 import { authService } from '../../services/authService';
 import { UserRole } from '../../types';
 
@@ -27,7 +28,7 @@ const TransparencyManager: React.FC = () => {
     setIsSaving(true);
     updatePageContent(content);
     setIsSaving(false);
-    alert('Transparency metrics updated!');
+    notify('Transparency metrics updated!');
   };
 
   if (isDonor) {

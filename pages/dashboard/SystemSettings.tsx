@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 import { getSystemSettings, subscribeStoreUpdates, updateSystemSettings } from '../../services/mockData';
 
 const SystemSettings: React.FC = () => {
@@ -8,7 +9,7 @@ const SystemSettings: React.FC = () => {
 
   const handleSave = () => {
     updateSystemSettings(settings);
-    alert('System settings updated successfully.');
+    notify('System settings updated successfully.');
   };
 
   const Toggle = ({ label, keyName, hint }: { label: string; keyName: string; hint: string }) => (

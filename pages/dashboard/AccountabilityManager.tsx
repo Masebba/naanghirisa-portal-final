@@ -5,6 +5,7 @@ import { getExpenditures, addExpenditure, updateExpenditure, getDonations, getOt
 import { Expenditure, UserRole, OtherIncome, Donation } from '../../types';
 import { authService } from '../../services/authService';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 
 const AccountabilityManager: React.FC = () => {
   const currentUser = authService.getCurrentUser();
@@ -57,7 +58,7 @@ const AccountabilityManager: React.FC = () => {
 
   const handleInitiateRequest = () => {
     if (!newReq.title || newReq.amount <= 0) {
-      alert("Please enter valid title and amount.");
+      notify("Please enter valid title and amount.");
       return;
     }
     const req: Expenditure = {
@@ -75,13 +76,13 @@ const AccountabilityManager: React.FC = () => {
     setExpenditures([...getExpenditures()]);
     setShowRequestModal(false);
     setNewReq({ title: '', amount: 0, category: 'Education', description: '', receiptImage: '' });
-    alert('Expenditure request initiated and sent for approval.');
+    notify('Expenditure request initiated and sent for approval.');
   };
 
   const handleLogIncome = () => {
     if (!isFullAdmin) return;
     if (!newIncome.title || newIncome.amount <= 0) {
-      alert("Please enter valid source and amount.");
+      notify("Please enter valid source and amount.");
       return;
     }
     const inc: OtherIncome = {
@@ -97,7 +98,7 @@ const AccountabilityManager: React.FC = () => {
     setOtherIncome([...getOtherIncome()]);
     setShowIncomeModal(false);
     setNewIncome({ title: '', amount: 0, category: 'Other', description: '', receiptImage: '' });
-    alert('Additional income logged successfully.');
+    notify('Additional income logged successfully.');
   };
 
   const handleUpdateStatus = (id: string, status: 'Approved' | 'Rejected') => {
@@ -107,7 +108,7 @@ const AccountabilityManager: React.FC = () => {
       const updated = { ...exp, status, approvedBy: currentUser?.name };
       updateExpenditure(updated);
       setExpenditures([...getExpenditures()]);
-      alert(`Request ${status === 'Approved' ? 'approved' : 'rejected'}.`);
+      notify(`Request ${status === 'Approved' ? 'approved' : 'rejected'}.`);
     }
   };
 
@@ -295,10 +296,10 @@ const AccountabilityManager: React.FC = () => {
                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-12">Consolidated annual and quarterly performance documents</p>
                
                <div className="flex flex-wrap justify-center gap-6">
-                  <button onClick={() => alert('Compiling Annual Report...')} className="px-10 py-5 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-black transition-all flex items-center gap-3 shadow-lg">
+                  <button onClick={() => notify('Compiling Annual Report...')} className="px-10 py-5 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-black transition-all flex items-center gap-3 shadow-lg">
                      <i className="fas fa-download"></i> 2024 Audit Statement
                   </button>
-                  <button onClick={() => alert('Generating Q1 Statement...')} className="px-10 py-5 bg-white border border-slate-200 text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-3 shadow-sm">
+                  <button onClick={() => notify('Generating Q1 Statement...')} className="px-10 py-5 bg-white border border-slate-200 text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-3 shadow-sm">
                      <i className="fas fa-file-contract"></i> Q1 Operational Audit
                   </button>
                </div>

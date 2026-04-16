@@ -1,13 +1,14 @@
 
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockCampaigns } from '../services/mockData';
+import { getCampaigns } from '../services/mockData';
 import { COLORS } from '../constants';
+import { notify } from '../services/notifications';
 
 const CampaignDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const campaign = mockCampaigns.find((c) => c.id === id);
+  const campaign = getCampaigns().find((c) => c.id === id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -22,7 +23,7 @@ const CampaignDetail: React.FC = () => {
   const isClosed = campaign.status === 'Closed';
 
   const handleDonate = () => {
-    alert(`Initiating donation for ${campaign.name}.`);
+    notify(`Initiating donation for ${campaign.name}.`);
   };
 
   return (

@@ -2,10 +2,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
-    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
-    function role() { return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? userDoc().data.role : null; }
+    function role() { return isSignedIn() ? request.auth.token.role : null; }
     function isAdmin() { return role() in ['SUPER_ADMIN', 'MID_ADMIN', 'STAFF_ADMIN']; }
     function isSelf(userId) { return isSignedIn() && request.auth.uid == userId; }
+
+    function hasOnlyKeys(requiredKeys) {
+      return request.resource.data.keys().hasOnly(requiredKeys);
+    }
+
+    function validUserCreate() {
+      return request.resource.data.id == request.auth.uid
+        && hasOnlyKeys(['id', 'name', 'email', 'phone', 'role', 'avatar', 'location', 'workDetails', 'status', 'createdAt', 'updatedAt', 'phoneNormalized'])
+        && request.resource.data.role in ['DONOR', 'VOLUNTEER']
+        && request.resource.data.status == 'Active';
+    }
+
+    function validSelfUserUpdate() {
+      return request.resource.data.id == resource.data.id
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'phone', 'avatar', 'location', 'workDetails', 'updatedAt', 'phoneNormalized']);
+    }
+
+    function validPublicDonationCreate() {
+      return hasOnlyKeys(['id', 'donorName', 'amount', 'date', 'campaignId', 'category', 'description', 'receiptImage', 'createdAt', 'updatedAt'])
+        && request.resource.data.donorName is string
+        && request.resource.data.donorName.size() > 0
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0;
+    }
+
+    function validPublicVolunteerCreate() {
+      return hasOnlyKeys(['id', 'name', 'email', 'phone', 'message', 'interests', 'location', 'avatar', 'status', 'joinedDate', 'tasks', 'documents', 'createdAt', 'updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 5
+        && request.resource.data.status == 'Pending';
+    }
+
+    function validFeedbackCreate() {
+      return hasOnlyKeys(['id', 'name', 'email', 'message', 'category', 'subject', 'sender', 'replyTo', 'date', 'status', 'createdAt', 'updatedAt'])
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0;
+    }
 
     match /site/{docId} {
       allow read: if true;
@@ -14,8 +54,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn() && (isAdmin() || isSelf(userId));
-      allow create: if isAdmin() || isSelf(userId);
-      allow update: if isAdmin() || isSelf(userId);
+      allow create: if isAdmin() || validUserCreate();
+      allow update: if isAdmin() || (isSelf(userId) && validSelfUserUpdate());
       allow delete: if isAdmin();
     }
 
@@ -24,12 +64,13 @@ service cloud.firestore {
     match /news/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /leaders/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /taskLibrary/{docId} { allow read, write: if isAdmin(); }
-    match /notifications/{docId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
-    match /donations/{docId} { allow read: if isAdmin() || isSelf(resource.data.userId); allow create: if true; allow update, delete: if isAdmin(); }
+    match /notifications/{docId} { allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid); allow write: if isAdmin(); }
+    match /auditLogs/{docId} { allow read, write: if isAdmin(); }
+    match /donations/{docId} { allow read: if true; allow create: if validPublicDonationCreate(); allow update, delete: if isAdmin(); }
     match /expenditures/{docId} { allow read: if isAdmin() || resource.data.status == 'Approved'; allow write: if isAdmin(); }
     match /otherIncome/{docId} { allow read, write: if isAdmin(); }
-    match /volunteers/{docId} { allow read: if isAdmin() || isSelf(resource.data.userId); allow create: if true; allow update, delete: if isAdmin(); }
-    match /feedback/{docId} { allow read, write: if isSignedIn() || true; }
+    match /volunteers/{docId} { allow read: if isAdmin(); allow create: if validPublicVolunteerCreate(); allow update, delete: if isAdmin(); }
+    match /feedback/{docId} { allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId); allow create: if validFeedbackCreate(); allow update, delete: if isAdmin(); }
     match /{document=**} { allow read, write: if false; }
   }
 }

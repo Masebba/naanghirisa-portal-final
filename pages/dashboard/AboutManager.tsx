@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { addLeader, deleteLeader, getLeaders, getPageContent, subscribeStoreUpdates, updatePageContent, updateLeader } from '../../services/mockData';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
 import { Leader } from '../../types';
 
 const AboutManager: React.FC = () => {
@@ -16,7 +17,7 @@ const AboutManager: React.FC = () => {
     updatePageContent(content);
     // In a real app, you'd also save leaders
     setIsSaving(false);
-    alert('About page content updated!');
+    notify('About page content updated!');
   };
 
   const handleImageUpload = (key: 'aboutJourneyImage', e: React.ChangeEvent<HTMLInputElement>) => {

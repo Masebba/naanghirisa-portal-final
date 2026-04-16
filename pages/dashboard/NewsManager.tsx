@@ -3,15 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { getNews, addNews, updateNews, deleteNews } from '../../services/mockData';
 import { NewsPost } from '../../types';
 import { COLORS } from '../../constants';
+import { downloadJson } from '../../services/fileExport';
+import { paginate, matchesSearch } from '../../services/tableUtils';
 
 const NewsManager: React.FC = () => {
   const [news, setNews] = useState<NewsPost[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<NewsPost>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     setNews([...getNews()]);
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,6 +57,9 @@ const NewsManager: React.FC = () => {
     setFormData(n);
   };
 
+  const filteredNews = news.filter(n => matchesSearch([n.title, n.content, n.category, n.summary], searchTerm));
+  const { pageItems: visibleNews, totalPages } = paginate<NewsPost>(filteredNews, currentPage, pageSize);
+
   const handleDelete = (id: string) => {
     if (confirm('Delete this article?')) {
       deleteNews(id);
@@ -62,12 +74,15 @@ const NewsManager: React.FC = () => {
           <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>News & Media CMS</h2>
           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Manage public impact stories and updates</p>
         </div>
-        <button 
-          onClick={() => { setEditingId('new'); setFormData({}); }}
-          className="px-6 py-3 bg-slate-900 text-white font-black rounded-xl hover:bg-black transition-all text-[10px] uppercase tracking-widest"
-        >
-          New Post
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => downloadJson('news-backup', news)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] uppercase tracking-widest">Backup JSON</button>
+          <button 
+            onClick={() => { setEditingId('new'); setFormData({}); }}
+            className="px-6 py-3 bg-slate-900 text-white font-black rounded-xl hover:bg-black transition-all text-[10px] uppercase tracking-widest"
+          >
+            New Post
+          </button>
+        </div>
       </div>
 
       {editingId && (
@@ -135,6 +150,13 @@ const NewsManager: React.FC = () => {
         </div>
       )}
 
+      <div className="flex justify-end">
+        <div className="w-full max-w-sm relative">
+          <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search posts" className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm outline-none focus:border-orange-500" />
+        </div>
+      </div>
+
       <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-100">
@@ -146,7 +168,7 @@ const NewsManager: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {news.map(n => (
+            {visibleNews.map(n => (
               <tr key={n.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-4">
@@ -166,6 +188,15 @@ const NewsManager: React.FC = () => {
             ))}
           </tbody>
         </table>
+        {filteredNews.length > pageSize && (
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-8 py-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Page {currentPage} of {totalPages}</p>
+            <div className="flex gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Prev</button>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

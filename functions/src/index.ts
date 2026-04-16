@@ -9,17 +9,49 @@ const auth = admin.auth();
 const sanitize = (value: unknown) => (typeof value === "string" ? value.trim() : "");
 const normalizePhone = (value: unknown) => sanitize(value).replace(/\s+/g, "").replace(/-/g, "");
 
+const ALLOWED_ROLES = ["SUPER_ADMIN", "MID_ADMIN", "STAFF_ADMIN", "DONOR", "VOLUNTEER"] as const;
+type AllowedRole = (typeof ALLOWED_ROLES)[number];
+
 const ensureRole = (request: { auth?: { token?: Record<string, unknown> } }) => String(request.auth?.token?.role || "");
 const assertAdmin = (request: { auth?: { token?: Record<string, unknown> } }) => {
   const role = ensureRole(request);
-  if (!["SUPER_ADMIN", "MID_ADMIN"].includes(role)) {
+  if (!['SUPER_ADMIN', 'MID_ADMIN', 'STAFF_ADMIN'].includes(role)) {
     throw new HttpsError("permission-denied", "Admin access required.");
   }
+};
+
+const requireString = (value: unknown, field: string) => {
+  const trimmed = sanitize(value);
+  if (!trimmed) throw new HttpsError("invalid-argument", `Missing ${field}.`);
+  return trimmed;
+};
+
+const requireRole = (value: unknown) => {
+  const role = sanitize(value) as AllowedRole;
+  if (!ALLOWED_ROLES.includes(role)) {
+    throw new HttpsError("invalid-argument", "Invalid role.");
+  }
+  return role;
 };
 
 const hasAnyUsers = async () => {
   const snap = await db.collection("users").limit(1).get();
   return !snap.empty;
+};
+
+const writeProfile = async (userId: string, profile: Record<string, unknown>) => {
+  await db.collection("users").doc(userId).set({
+    ...profile,
+    id: userId,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+};
+
+const writeAuditLog = async (payload: Record<string, unknown>) => {
+  await db.collection("auditLogs").add({
+    ...payload,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
 };
 
 export const bootstrapFirstAdmin = onCall(async request => {
@@ -28,106 +60,128 @@ export const bootstrapFirstAdmin = onCall(async request => {
     throw new HttpsError("failed-precondition", "An administrator already exists.");
   }
 
-  const { name, email, phone = "", password, avatar = "", location = "", workDetails = "" } = request.data || {};
-  if (!name || !email || !password) {
-    throw new HttpsError("invalid-argument", "Missing administrator details.");
-  }
+  const name = requireString(request.data?.name, "administrator name");
+  const email = requireString(request.data?.email, "administrator email").toLowerCase();
+  const password = requireString(request.data?.password, "password");
+  const phone = sanitize(request.data?.phone);
+  const avatar = sanitize(request.data?.avatar);
+  const location = sanitize(request.data?.location);
+  const workDetails = sanitize(request.data?.workDetails);
 
   const user = await auth.createUser({
-    displayName: sanitize(name),
-    email: sanitize(email),
-    password: sanitize(password),
-    photoURL: sanitize(avatar) || undefined,
+    displayName: name,
+    email,
+    password,
+    photoURL: avatar || undefined,
   });
 
   await auth.setCustomUserClaims(user.uid, { role: "SUPER_ADMIN" });
 
-  await db.collection("users").doc(user.uid).set({
-    id: user.uid,
-    name: sanitize(name),
-    email: sanitize(email).toLowerCase(),
-    phone: sanitize(phone),
+  await writeProfile(user.uid, {
+    name,
+    email,
+    phone,
     phoneNormalized: normalizePhone(phone),
     role: "SUPER_ADMIN",
-    avatar: sanitize(avatar),
-    location: sanitize(location),
-    workDetails: sanitize(workDetails),
+    avatar,
+    location,
+    workDetails,
+    status: "Active",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  await writeAuditLog({ action: "create", entity: "user", entityId: user.uid, actorRole: "SYSTEM", label: email });
   return { success: true, id: user.uid };
 });
 
 export const createPortalUser = onCall(async request => {
   assertAdmin(request);
 
-  const { name, email, phone = "", role, password, avatar = "", location = "", workDetails = "" } = request.data || {};
-  if (!email || !password || !name || !role) {
-    throw new HttpsError("invalid-argument", "Missing user fields.");
-  }
+  const name = requireString(request.data?.name || request.data?.displayName, "name");
+  const email = requireString(request.data?.email, "email").toLowerCase();
+  const password = requireString(request.data?.password, "password");
+  const phone = sanitize(request.data?.phone);
+  const role = requireRole(request.data?.role);
+  const avatar = sanitize(request.data?.avatar || request.data?.photoURL);
+  const location = sanitize(request.data?.location);
+  const workDetails = sanitize(request.data?.workDetails);
 
   const user = await auth.createUser({
-    displayName: sanitize(name),
-    email: sanitize(email),
-    password: sanitize(password),
-    photoURL: sanitize(avatar) || undefined,
+    displayName: name,
+    email,
+    password,
+    photoURL: avatar || undefined,
   });
 
-  await auth.setCustomUserClaims(user.uid, { role: sanitize(role) });
+  await auth.setCustomUserClaims(user.uid, { role });
 
-  await db.collection("users").doc(user.uid).set({
-    id: user.uid,
-    name: sanitize(name),
-    email: sanitize(email).toLowerCase(),
-    phone: sanitize(phone),
+  await writeProfile(user.uid, {
+    name,
+    email,
+    phone,
     phoneNormalized: normalizePhone(phone),
-    role: sanitize(role),
-    avatar: sanitize(avatar),
-    location: sanitize(location),
-    workDetails: sanitize(workDetails),
+    role,
+    avatar,
+    location,
+    workDetails,
+    status: "Active",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  await writeAuditLog({ action: "create", entity: "user", entityId: user.uid, actorRole: "SYSTEM", label: email });
   return { success: true, id: user.uid };
 });
 
 export const updatePortalUser = onCall(async request => {
   assertAdmin(request);
 
-  const { id, name, email, phone = "", role, avatar = "", location = "", workDetails = "", password } = request.data || {};
-  if (!id) throw new HttpsError("invalid-argument", "Missing user id.");
-
+  const id = requireString(request.data?.id, "user id");
   const payload: Record<string, unknown> = {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
-  if (name !== undefined) payload.name = sanitize(name);
-  if (email !== undefined) payload.email = sanitize(email).toLowerCase();
-  if (phone !== undefined) {
-    payload.phone = sanitize(phone);
+  if (request.data?.name !== undefined || request.data?.displayName !== undefined) {
+    payload.name = requireString(request.data?.name || request.data?.displayName, "name");
+  }
+  if (request.data?.email !== undefined) {
+    payload.email = requireString(request.data?.email, "email").toLowerCase();
+  }
+  if (request.data?.phone !== undefined) {
+    const phone = sanitize(request.data?.phone);
+    payload.phone = phone;
     payload.phoneNormalized = normalizePhone(phone);
   }
-  if (role !== undefined) payload.role = sanitize(role);
-  if (avatar !== undefined) payload.avatar = sanitize(avatar);
-  if (location !== undefined) payload.location = sanitize(location);
-  if (workDetails !== undefined) payload.workDetails = sanitize(workDetails);
+  if (request.data?.role !== undefined) {
+    payload.role = requireRole(request.data?.role);
+  }
+  if (request.data?.avatar !== undefined || request.data?.photoURL !== undefined) {
+    payload.avatar = sanitize(request.data?.avatar || request.data?.photoURL);
+  }
+  if (request.data?.location !== undefined) {
+    payload.location = sanitize(request.data?.location);
+  }
+  if (request.data?.workDetails !== undefined) {
+    payload.workDetails = sanitize(request.data?.workDetails);
+  }
+  if (request.data?.status !== undefined) {
+    payload.status = sanitize(request.data?.status);
+  }
 
-  await db.collection("users").doc(String(id)).set(payload, { merge: true });
+  await db.collection("users").doc(id).set(payload, { merge: true });
+  await writeAuditLog({ action: "update", entity: "user", entityId: id, actorRole: ensureRole(request), label: payload.email || payload.name || id, after: payload });
 
   const authUpdates: Record<string, unknown> = {};
-  if (email !== undefined) authUpdates.email = sanitize(email).toLowerCase();
-  if (name !== undefined) authUpdates.displayName = sanitize(name);
-  if (avatar !== undefined) authUpdates.photoURL = sanitize(avatar) || null;
+  if (payload.email !== undefined) authUpdates.email = payload.email;
+  if (payload.name !== undefined) authUpdates.displayName = payload.name;
+  if (payload.avatar !== undefined) authUpdates.photoURL = payload.avatar || null;
   if (Object.keys(authUpdates).length) {
-    await auth.updateUser(String(id), authUpdates);
+    await auth.updateUser(id, authUpdates);
   }
-  if (role !== undefined) {
-    await auth.setCustomUserClaims(String(id), { role: sanitize(role) });
+  if (payload.role !== undefined) {
+    await auth.setCustomUserClaims(id, { role: payload.role });
   }
-  if (password) {
-    await auth.updateUser(String(id), { password: sanitize(password) });
+  if (request.data?.password) {
+    await auth.updateUser(id, { password: requireString(request.data.password, "password") });
   }
 
   return { success: true };
@@ -135,19 +189,24 @@ export const updatePortalUser = onCall(async request => {
 
 export const deletePortalUser = onCall(async request => {
   assertAdmin(request);
-  const id = request.data?.id;
-  if (!id) throw new HttpsError("invalid-argument", "Missing user id.");
+  const id = requireString(request.data?.id, "user id");
   await Promise.all([
-    auth.deleteUser(String(id)),
-    db.collection("users").doc(String(id)).delete(),
+    auth.updateUser(id, { disabled: true }),
+    db.collection("users").doc(id).set({
+      status: "Disabled",
+      disabledAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true }),
   ]);
+  await writeAuditLog({ action: "delete", entity: "user", entityId: id, actorRole: ensureRole(request), label: id });
   return { success: true };
 });
 
 export const resetPortalPassword = onCall(async request => {
   assertAdmin(request);
-  const { id, password } = request.data || {};
-  if (!id || !password) throw new HttpsError("invalid-argument", "Missing password reset details.");
-  await auth.updateUser(String(id), { password: sanitize(password) });
+  const id = requireString(request.data?.id, "user id");
+  const password = requireString(request.data?.password, "password");
+  await auth.updateUser(id, { password });
+  await writeAuditLog({ action: "password_reset", entity: "user", entityId: id, actorRole: ensureRole(request), label: id });
   return { success: true };
 });

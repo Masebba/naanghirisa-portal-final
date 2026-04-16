@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { COLORS, BRAND } from '../../constants';
 import { authService } from '../../services/authService';
+import { notify } from '../../services/notifications';
 import {
   acceptVolunteerApplication,
   addLibraryTask,
@@ -87,7 +88,7 @@ const VolunteerManager: React.FC = () => {
       setSelectedVolunteerId(application.id);
       setStatusFilter('Active');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Unable to approve this application.');
+      notify(error instanceof Error ? error.message : 'Unable to approve this application.');
     } finally {
       setBusyId(null);
     }
@@ -106,7 +107,7 @@ const VolunteerManager: React.FC = () => {
   const assignTask = () => {
     if (!selectedVolunteer) return;
     if (!taskForm.title.trim()) {
-      alert('Enter a task title first.');
+      notify('Enter a task title first.');
       return;
     }
     const task: VolunteerTask = {
@@ -140,7 +141,7 @@ const VolunteerManager: React.FC = () => {
   const issueDocument = () => {
     if (!selectedVolunteer) return;
     if (!docForm.title.trim() || !docForm.reason.trim()) {
-      alert('Complete the document title and reason.');
+      notify('Complete the document title and reason.');
       return;
     }
     awardVolunteerDocument(selectedVolunteer.id, {

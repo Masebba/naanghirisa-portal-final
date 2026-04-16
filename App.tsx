@@ -34,6 +34,8 @@ import AccountabilityManager from './pages/dashboard/AccountabilityManager';
 import ProfileSettings from './pages/dashboard/ProfileSettings';
 import { UserRole, User } from './types';
 import { authService } from './services/authService';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { isProductionEnvironmentReady } from './services/firebase';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }> = ({ children, roles }) => {
   const user = authService.getCurrentUser();
@@ -65,6 +67,18 @@ const App: React.FC = () => {
     setUser(authService.getCurrentUser());
   }, [location.pathname]);
 
+  if (!isProductionEnvironmentReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-xl rounded-3xl border border-amber-200 bg-white p-8 shadow-xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600">Production setup required</p>
+          <h1 className="mt-3 text-2xl font-black text-slate-900">Missing Firebase environment values</h1>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">Set the VITE_FIREBASE_* variables before deploying so auth, Firestore, and uploads can work safely in production.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm font-medium">
@@ -74,7 +88,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <ToastViewport />
       <Routes>
         <Route path="/" element={<Layout><Home /></Layout>} />
@@ -120,7 +134,7 @@ const App: React.FC = () => {
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 };
 

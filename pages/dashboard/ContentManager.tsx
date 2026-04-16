@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { COLORS } from '../../constants';
+import { notify } from '../../services/notifications';
+import { downloadJson } from '../../services/fileExport';
 import { getPageContent, subscribeStoreUpdates, updatePageContent, type PageContent } from '../../services/mockData';
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'image';
@@ -170,7 +172,7 @@ const ContentManager: React.FC = () => {
     setIsSaving(true);
     updatePageContent(content);
     window.setTimeout(() => setIsSaving(false), 300);
-    alert('Website content updated successfully.');
+    notify('Website content updated successfully.');
   };
 
   const updateField = (key: keyof PageContent, value: string | number) => {
@@ -263,9 +265,12 @@ const ContentManager: React.FC = () => {
           <h2 className="text-2xl font-black" style={{ color: COLORS.primary }}>Content CMS</h2>
           <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">Manage site copy and every public-facing image from Firestore</p>
         </div>
-        <button onClick={handleSave} disabled={isSaving} className="rounded-2xl bg-orange-600 px-8 py-4 font-black text-white shadow-xl shadow-orange-100 transition hover:bg-orange-700 disabled:opacity-50">
-          {isSaving ? 'Saving...' : 'Publish Changes'}
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => downloadJson('site-content-backup', pageContent)} className="rounded-2xl border border-slate-200 bg-white px-6 py-4 font-black text-slate-600 transition hover:bg-slate-50">Backup JSON</button>
+          <button onClick={handleSave} disabled={isSaving} className="rounded-2xl bg-orange-600 px-8 py-4 font-black text-white shadow-xl shadow-orange-100 transition hover:bg-orange-700 disabled:opacity-50">
+            {isSaving ? 'Saving...' : 'Publish Changes'}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 rounded-[2rem] bg-white p-3 shadow-sm ring-1 ring-slate-100">

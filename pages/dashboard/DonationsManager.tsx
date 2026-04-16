@@ -1,9 +1,11 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getDonations, getCampaigns, addDonation } from '../../services/mockData';
+import { getDonations, getCampaigns, addDonation, addNotification } from '../../services/mockData';
 import { Donation, UserRole, Campaign } from '../../types';
 import { COLORS } from '../../constants';
+import { downloadJson, downloadCsv } from '../../services/fileExport';
+import { notify } from '../../services/notifications';
 import { authService } from '../../services/authService';
 
 type PaymentMethod = 'MTN' | 'AIRTEL' | 'CARD';
@@ -58,7 +60,7 @@ const DonationsManager: React.FC = () => {
 
   const handleManualLog = () => {
     if (!newDonation.donorName || newDonation.amount <= 0) {
-      alert("Please enter a valid donor name and amount.");
+      notify("Please enter a valid donor name and amount.");
       return;
     }
     const log: Donation = {
@@ -72,6 +74,14 @@ const DonationsManager: React.FC = () => {
       date: new Date().toISOString().split('T')[0]
     };
     addDonation(log);
+    if (user?.id) {
+      addNotification({
+        userId: user.id,
+        title: 'Manual donation logged',
+        message: `${newDonation.donorName} contribution of $${newDonation.amount.toLocaleString()} was saved.`,
+        type: 'general',
+      });
+    }
     setDonations([...getDonations()]);
     setShowLogModal(false);
     setNewDonation({ donorName: '', amount: 0, category: 'General Fund', campaignId: 'General', description: '', receiptImage: '' });
@@ -79,7 +89,7 @@ const DonationsManager: React.FC = () => {
 
   const handleProcessPayment = () => {
     if ((paymentMethod === 'MTN' || paymentMethod === 'AIRTEL') && phoneNumber.length < 10) {
-      alert('Please enter a valid Ugandan phone number (e.g., 077... or 070...)');
+      notify('Please enter a valid Ugandan phone number (e.g., 077... or 070...)');
       return;
     }
 
@@ -101,6 +111,14 @@ const DonationsManager: React.FC = () => {
     };
 
     addDonation(log);
+    if (user?.id) {
+      addNotification({
+        userId: user.id,
+        title: 'Donation received',
+        message: `Your contribution of $${donorAmount.toLocaleString()} to ${campaignName} was recorded successfully.`,
+        type: 'general',
+      });
+    }
     setDonations([...getDonations()]);
     setIsProcessing(false);
     setProcessStatus('Contribution recorded successfully.');
@@ -127,6 +145,8 @@ const DonationsManager: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-4">
+            <button onClick={() => downloadJson('donations-backup', donations)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] uppercase tracking-widest">Backup JSON</button>
+            <button onClick={() => downloadCsv('donations-backup', donations.map(d => ({ id: d.id, donorName: d.donorName, amount: d.amount, date: d.date, campaignId: d.campaignId || '', category: d.category || '', description: d.description || '' })))} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] uppercase tracking-widest">Export CSV</button>
             {isAdminOrStaff && (
             <button onClick={() => setShowLogModal(true)} className="px-6 py-3 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 transition-all text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100 flex items-center gap-2">
                 <i className="fas fa-plus"></i> Manual Log
@@ -314,7 +334,7 @@ const DonationsManager: React.FC = () => {
                                 />
                              </div>
                              <button 
-                               onClick={() => { if(donorAmount > 0) setStep(2); else alert("Enter amount"); }}
+                               onClick={() => { if(donorAmount > 0) setStep(2); else notify("Enter amount"); }}
                                className="w-full py-6 bg-slate-900 text-white font-black rounded-3xl hover:bg-black transition-all shadow-xl uppercase text-xs tracking-widest"
                              >
                                 Continue to Payment

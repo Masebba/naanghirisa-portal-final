@@ -9,13 +9,14 @@ import {
   updateProfile,
   type User as FirebaseAuthUser,
 } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from './firebase';
 import { createAuthUser } from './authApi';
+import { portalFunctions } from './portalFunctions';
 import { startPrivateListeners } from './mockData';
+import { recordAuditEvent } from './auditService';
 import { User, UserRole } from '../types';
 
-const AUTH_KEY = 'naanghirisa_session';
 const PROFILE_COLLECTION = 'users';
 
 const normalizePhone = (value: string) => value.replace(/\s+/g, '').replace(/-/g, '').trim();
@@ -43,20 +44,6 @@ const resolveReady = () => {
 
 const persistSession = (user: User | null) => {
   currentUser = user;
-  if (typeof window === 'undefined') return;
-  if (user) localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  else localStorage.removeItem(AUTH_KEY);
-};
-
-const hydrateFromStorage = () => {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(AUTH_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as User;
-  } catch {
-    return null;
-  }
 };
 
 const parseRole = (value: unknown): UserRole | null => {
@@ -72,40 +59,56 @@ const loadProfileByUid = async (uid: string): Promise<PortalUserDoc | null> => {
 
 const saveProfile = async (profile: User, extra: Record<string, unknown> = {}) => {
   if (!db || !isFirebaseConfigured) return;
-  await setDoc(
-    doc(db, PROFILE_COLLECTION, profile.id),
-    {
-      ...profile,
-      ...extra,
-      phoneNormalized: normalizePhone(profile.phone || ''),
-      updatedAt: new Date().toISOString(),
-      createdAt: extra.createdAt || new Date().toISOString(),
-    },
-    { merge: true },
-  );
+  const payload: Record<string, unknown> = {
+    ...profile,
+    ...extra,
+    phoneNormalized: normalizePhone(profile.phone || ''),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (extra.createdAt !== undefined) {
+    payload.createdAt = extra.createdAt;
+  }
+
+  await setDoc(doc(db, PROFILE_COLLECTION, profile.id), payload, { merge: true });
 };
 
 const syncSessionToFirestore = async (firebaseUser: FirebaseAuthUser, profile?: Partial<User>) => {
   if (!db || !isFirebaseConfigured) {
-    const fallback = hydrateFromStorage();
-    if (fallback) persistSession(fallback);
-    return fallback;
+    return null;
   }
 
   const existing = await loadProfileByUid(firebaseUser.uid).catch(() => null);
-  const roleFromClaim = await (async () => {
+  const claimToken = await (async () => {
     try {
-      const token = await getIdTokenResult(firebaseUser, true);
-      return parseRole(token.claims.role);
+      return await getIdTokenResult(firebaseUser, true);
     } catch {
       return null;
     }
   })();
 
-  const usersSnap = await getDocs(collection(db, PROFILE_COLLECTION)).catch(() => null);
-  const hasAnyProfiles = Boolean(usersSnap && !usersSnap.empty);
-  const inferredRole = hasAnyProfiles ? UserRole.VOLUNTEER : UserRole.SUPER_ADMIN;
-  const resolvedRole = roleFromClaim ?? existing?.role ?? profile?.role ?? inferredRole;
+  const claimRole = parseRole(claimToken?.claims.role);
+  const refreshedRole = claimRole ?? await (async () => {
+    try {
+      await firebaseUser.reload();
+      const refreshed = await getIdTokenResult(firebaseUser, true);
+      return parseRole(refreshed.claims.role);
+    } catch {
+      return null;
+    }
+  })();
+
+  const privilegedRoles = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN] as const;
+  const existingRole = Object.values(UserRole).includes(existing?.role as UserRole) ? existing?.role as UserRole : null;
+  const profileRole = Object.values(UserRole).includes(profile?.role as UserRole) ? profile?.role as UserRole : null;
+
+  const resolvedRole =
+    refreshedRole ??
+    (existingRole && privilegedRoles.includes(existingRole as (typeof privilegedRoles)[number]) ? existingRole : null) ??
+    profileRole ??
+    existingRole ??
+    UserRole.VOLUNTEER;
+
   const merged: User = {
     id: firebaseUser.uid,
     name: profile?.name || existing?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Portal User',
@@ -124,42 +127,24 @@ const syncSessionToFirestore = async (firebaseUser: FirebaseAuthUser, profile?: 
     return null;
   }
 
-  await saveProfile(merged, { createdAt: existing?.createdAt || new Date().toISOString() });
+  await saveProfile(merged, existing?.createdAt !== undefined ? { createdAt: existing.createdAt } : { createdAt: new Date().toISOString() });
   persistSession(stripPassword(merged));
   return merged;
 };
 
-const signInAfterBootstrap = async (email: string, password: string) => {
-  if (!auth) throw new Error('Authentication is not available.');
-  const credential = await signInWithEmailAndPassword(auth, email, password);
-  const profile = await syncSessionToFirestore(credential.user);
-  return profile ? stripPassword(profile) : null;
-};
-
-const localStorageOnlyLogin = async (identifier: string, password: string) => {
-  const fallback = hydrateFromStorage();
-  if (fallback && fallback.email.toLowerCase() === identifier.toLowerCase().trim() && password.length >= 8) {
-    persistSession(fallback);
-    return fallback;
-  }
-  return null;
-};
-
 export const authService = {
   subscribe: (callback: (user: User | null) => void) => {
-    if (typeof window !== 'undefined' && !currentUser) {
-      const storageUser = hydrateFromStorage();
-      if (storageUser) persistSession(storageUser);
-    }
-
     if (!auth || !isFirebaseConfigured) {
-      callback(currentUser || hydrateFromStorage());
+      callback(null);
       resolveReady();
       return () => undefined;
     }
 
     return onAuthStateChanged(auth, async firebaseUser => {
       if (!firebaseUser) {
+        if (currentUser) {
+          void recordAuditEvent({ action: 'logout', entity: 'auth', entityId: currentUser.id, label: currentUser.email });
+        }
         persistSession(null);
         callback(null);
         resolveReady();
@@ -182,7 +167,7 @@ export const authService = {
 
   login: async (identifier: string, password: string): Promise<User | null> => {
     if (!auth || !isFirebaseConfigured) {
-      return localStorageOnlyLogin(identifier, password);
+      throw new Error('Firebase authentication is required to sign in.');
     }
 
     const email = identifier.toLowerCase().trim();
@@ -195,6 +180,7 @@ export const authService = {
     if (!profile) {
       throw new Error('This account has been disabled. Please contact your administrator.');
     }
+    void recordAuditEvent({ action: 'login', entity: 'auth', entityId: profile.id, label: profile.email });
     if ([UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN].includes(profile.role)) {
       startPrivateListeners(profile.role);
     }
@@ -215,6 +201,24 @@ export const authService = {
     if (!isFirebaseConfigured || !auth || !db) {
       throw new Error('Firebase is required to create accounts.');
     }
+
+    const targetRole = user.role || UserRole.VOLUNTEER;
+    const privilegedRoles = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN];
+
+    if (privilegedRoles.includes(targetRole)) {
+      await portalFunctions.createPortalUser({
+        name: user.name.trim(),
+        email: user.email.trim().toLowerCase(),
+        phone: user.phone || '',
+        role: targetRole,
+        password: user.password,
+        avatar: user.avatar || '',
+        location: user.location || '',
+        workDetails: user.workDetails || '',
+      });
+      return null;
+    }
+
     const created = await createAuthUser({
       email: user.email.trim().toLowerCase(),
       password: user.password,
@@ -222,31 +226,34 @@ export const authService = {
       photoURL: user.avatar || '',
     });
     const uid = created.localId;
-    const adminProfile: User = {
+    const profile: User = {
       id: uid,
       name: user.name.trim(),
       email: user.email.trim().toLowerCase(),
       phone: user.phone || '',
-      role: user.role || UserRole.VOLUNTEER,
+      role: targetRole,
       avatar: user.avatar || '',
       location: user.location || '',
       workDetails: user.workDetails || '',
       status: 'Active',
     };
-    await saveProfile(adminProfile, { createdAt: new Date().toISOString() });
-    persistSession(stripPassword(adminProfile));
-    return stripPassword(adminProfile);
+    await saveProfile(profile, { createdAt: new Date().toISOString() });
+    persistSession(stripPassword(profile));
+    void recordAuditEvent({ action: 'create', entity: 'user', entityId: profile.id, label: profile.email });
+    return stripPassword(profile);
   },
 
-
   logout: async () => {
+    if (currentUser) {
+      void recordAuditEvent({ action: 'logout', entity: 'auth', entityId: currentUser.id, label: currentUser.email });
+    }
     persistSession(null);
     if (auth && isFirebaseConfigured) {
       await signOut(auth);
     }
   },
 
-  getCurrentUser: (): User | null => currentUser || (isFirebaseConfigured ? currentUser : hydrateFromStorage()),
+  getCurrentUser: (): User | null => currentUser,
 
   updateCurrentUser: async (updatedUser: User) => {
     if (!currentUser) throw new Error('No active session found.');
@@ -254,11 +261,12 @@ export const authService = {
     const next: User = {
       ...currentUser,
       ...updatedUser,
-      role: currentUser.role,
+      role: currentUser.role || updatedUser.role,
       status: currentUser.status || 'Active',
     };
 
     persistSession(stripPassword(next));
+    void recordAuditEvent({ action: 'update', entity: 'user', entityId: next.id, label: next.email, after: next });
 
     if (auth && isFirebaseConfigured && auth.currentUser) {
       if (next.email && next.email !== auth.currentUser.email) {
@@ -290,16 +298,10 @@ export const authService = {
     await sendPasswordResetEmail(auth, email);
   },
 
-  isAuthenticated: (): boolean => Boolean(currentUser || (!isFirebaseConfigured && hydrateFromStorage())),
+  isAuthenticated: (): boolean => Boolean(currentUser),
 
   hasAccess: (allowedRoles: UserRole[]): boolean => {
     const user = authService.getCurrentUser();
     return !!user && allowedRoles.includes(user.role);
   },
 };
-
-if (typeof window !== 'undefined') {
-  authService.subscribe(user => {
-    if (user) persistSession(user);
-  });
-}

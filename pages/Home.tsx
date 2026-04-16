@@ -7,6 +7,7 @@ import {
   getPrograms,
   subscribeStoreUpdates,
 } from "../services/mockData";
+import { notify } from '../services/notifications';
 
 /* LOCAL IMAGES */
 import heroBg from "../assets/images/hero-bg.jpg";
@@ -312,7 +313,7 @@ const Home: React.FC = () => {
                   category: "Volunteer interest",
                 });
                 form.reset();
-                window.alert(
+                notify(
                   "Thanks. Your interest has been saved and the team can follow up from the dashboard.",
                 );
               }}

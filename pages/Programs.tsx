@@ -1,7 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getPageContent, mockPrograms, subscribeStoreUpdates } from '../services/mockData';
+import { getPageContent, getPrograms, subscribeStoreUpdates } from '../services/mockData';
 import { COLORS } from '../constants';
 import { Program } from '../types';
 
@@ -14,7 +14,7 @@ const Programs: React.FC = () => {
   useEffect(() => subscribeStoreUpdates(() => setPageContent(getPageContent())), []);
 
   const filteredPrograms = useMemo(() => {
-    return mockPrograms.filter(p => filter === 'All' || p.type === filter);
+    return getPrograms().filter(p => filter === 'All' || p.type === filter);
   }, [filter]);
 
   const displayedPrograms = filteredPrograms.slice(0, visibleCount);
