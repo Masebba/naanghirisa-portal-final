@@ -79,16 +79,36 @@ const syncSessionToFirestore = async (firebaseUser: FirebaseAuthUser, profile?: 
   }
 
   const existing = await loadProfileByUid(firebaseUser.uid).catch(() => null);
-  const roleFromClaim = await (async () => {
+  const claimToken = await (async () => {
     try {
-      const token = await getIdTokenResult(firebaseUser, true);
-      return parseRole(token.claims.role);
+      return await getIdTokenResult(firebaseUser, true);
     } catch {
       return null;
     }
   })();
 
-  const resolvedRole = roleFromClaim ?? existing?.role ?? profile?.role ?? UserRole.VOLUNTEER;
+  const claimRole = parseRole(claimToken?.claims.role);
+  const refreshedRole = claimRole ?? await (async () => {
+    try {
+      await firebaseUser.reload();
+      const refreshed = await getIdTokenResult(firebaseUser, true);
+      return parseRole(refreshed.claims.role);
+    } catch {
+      return null;
+    }
+  })();
+
+  const privilegedRoles = [UserRole.SUPER_ADMIN, UserRole.MID_ADMIN, UserRole.STAFF_ADMIN] as const;
+  const existingRole = Object.values(UserRole).includes(existing?.role as UserRole) ? existing?.role as UserRole : null;
+  const profileRole = Object.values(UserRole).includes(profile?.role as UserRole) ? profile?.role as UserRole : null;
+
+  const resolvedRole =
+    refreshedRole ??
+    (existingRole && privilegedRoles.includes(existingRole as (typeof privilegedRoles)[number]) ? existingRole : null) ??
+    profileRole ??
+    existingRole ??
+    UserRole.VOLUNTEER;
+
   const merged: User = {
     id: firebaseUser.uid,
     name: profile?.name || existing?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Portal User',
@@ -241,7 +261,7 @@ export const authService = {
     const next: User = {
       ...currentUser,
       ...updatedUser,
-      role: currentUser.role,
+      role: currentUser.role || updatedUser.role,
       status: currentUser.status || 'Active',
     };
 

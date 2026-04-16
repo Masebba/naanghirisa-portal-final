@@ -159,7 +159,7 @@ const normalizeUser = (data: DocumentData, id: string): User => ({
   name: toStringValue(data.name),
   email: toStringValue(data.email),
   phone: toStringValue(data.phone),
-  role: (data.role as UserRole) || UserRole.VOLUNTEER,
+  role: Object.values(UserRole).includes(data.role as UserRole) ? (data.role as UserRole) : UserRole.VOLUNTEER,
   avatar: toStringValue(data.avatar),
   location: toStringValue(data.location),
   workDetails: toStringValue(data.workDetails),
@@ -569,12 +569,22 @@ export const deleteCampaign = (id: string) => {
 
 export const getDonations = () => donations;
 export const addDonation = (donation: Donation) => {
-  donations = sortByNewest([{ ...donation, updatedAt: nowIso(), createdAt: nowIso() } as any, ...donations.filter(item => item.id !== donation.id)]);
+  const saved = { ...donation, updatedAt: nowIso(), createdAt: nowIso() } as any;
+  donations = sortByNewest([saved, ...donations.filter(item => item.id !== donation.id)]);
   syncLegacyExports();
-  void persistDoc("donations", donation.id, donation as any, "create");
+  void persistDoc("donations", donation.id, saved, "create");
   void bumpCampaignAmount(donation.campaignId, donation.amount);
   void updateTotals();
   notifyStoreChange();
+  const userId = String((donation as any).userId || '').trim();
+  if (userId) {
+    addNotification({
+      userId,
+      title: "Donation recorded",
+      message: `${donation.donorName} contribution of $${donation.amount.toLocaleString()} was saved.`,
+      type: "general",
+    });
+  }
 };
 
 export const getNews = () => news;

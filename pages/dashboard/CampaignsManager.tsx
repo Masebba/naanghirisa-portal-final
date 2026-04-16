@@ -62,7 +62,7 @@ const CampaignsManager: React.FC = () => {
   };
 
   const handleShare = (camp: Campaign, platform: string) => {
-      const shareUrl = `${window.location.origin}/#/campaigns/${camp.id}`;
+      const shareUrl = `${window.location.origin}/campaigns/${camp.id}`;
       const text = `Join me in supporting Naanghirisa's mission: ${camp.name}. Help us reach our goal of $${camp.targetAmount}!`;
       
       let url = '';

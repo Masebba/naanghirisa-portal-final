@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getDonations, getCampaigns, addDonation } from '../../services/mockData';
+import { getDonations, getCampaigns, addDonation, addNotification } from '../../services/mockData';
 import { Donation, UserRole, Campaign } from '../../types';
 import { COLORS } from '../../constants';
 import { downloadJson, downloadCsv } from '../../services/fileExport';
@@ -74,6 +74,14 @@ const DonationsManager: React.FC = () => {
       date: new Date().toISOString().split('T')[0]
     };
     addDonation(log);
+    if (user?.id) {
+      addNotification({
+        userId: user.id,
+        title: 'Manual donation logged',
+        message: `${newDonation.donorName} contribution of $${newDonation.amount.toLocaleString()} was saved.`,
+        type: 'general',
+      });
+    }
     setDonations([...getDonations()]);
     setShowLogModal(false);
     setNewDonation({ donorName: '', amount: 0, category: 'General Fund', campaignId: 'General', description: '', receiptImage: '' });
@@ -103,6 +111,14 @@ const DonationsManager: React.FC = () => {
     };
 
     addDonation(log);
+    if (user?.id) {
+      addNotification({
+        userId: user.id,
+        title: 'Donation received',
+        message: `Your contribution of $${donorAmount.toLocaleString()} to ${campaignName} was recorded successfully.`,
+        type: 'general',
+      });
+    }
     setDonations([...getDonations()]);
     setIsProcessing(false);
     setProcessStatus('Contribution recorded successfully.');

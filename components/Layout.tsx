@@ -24,9 +24,9 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-[100] bg-white/95 border-b-2" style={{ borderColor: COLORS.secondary }}>
+    <nav className="sticky top-0 z-[100] bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div className="max-w-8xl mx-auto px-4">
-        <div className="flex justify-between h-16 md:h-20 items-center">
+        <div className="flex justify-between h-16 md:h-20 items-center text-slate-700">
 
           {/* Logo */}
           <Link to="/" className="flex items-center">
@@ -39,10 +39,10 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-[12px] font-bold uppercase tracking-tight transition-colors
+                className={`text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors pb-1 border-b-2
                 ${location.pathname === item.path
-                    ? "text-red-900 border-b-2 border-orange-500"
-                    : "text-slate-600 hover:text-orange-500"
+                    ? "text-slate-900 border-slate-900"
+                    : "text-slate-500 border-transparent hover:text-slate-900 hover:border-slate-300"
                   }`}
               >
                 {item.name}
@@ -50,8 +50,7 @@ const Navbar: React.FC = () => {
             ))}
             <Link
               to="/login"
-              className="px-4 py-2 text-[10px] font-black text-white rounded-lg shadow-md hover:scale-105 transition-all"
-              style={{ backgroundColor: COLORS.primary }}
+              className="px-4 py-2 text-[10px] font-black text-slate-900 rounded-full shadow-sm border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all"
             >
               DONOR PORTAL
             </Link>
@@ -84,7 +83,7 @@ const Navbar: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-sm font-black uppercase tracking-widest text-slate-800 hover:text-orange-600"
+                  className="text-sm font-black uppercase tracking-widest text-slate-700 hover:text-slate-900"
                 >
                   {item.name}
                 </Link>
@@ -92,7 +91,7 @@ const Navbar: React.FC = () => {
 
               <Link
                 to="/login"
-                className="mt-6 block py-4 bg-orange-600 text-white text-center font-black rounded-xl uppercase tracking-widest"
+                className="mt-6 block py-4 bg-slate-900 text-white text-center font-black rounded-xl uppercase tracking-widest hover:bg-black"
               >
                 DONOR PORTAL
               </Link>

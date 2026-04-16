@@ -1,5 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: light;
+}
+
+html, body, #root {
+  min-height: 100%;
 }
 
 html {
@@ -8,8 +16,8 @@ html {
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #fff7ed;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #ffffff;
   color: #0f172a;
 }
 
@@ -74,7 +82,9 @@ textarea {
 
 
 /* Local icon system replacing external Font Awesome CDN */
-.fas, .fab {
+
+html.fa-fallback .fas,
+html.fa-fallback .fab {
   font-style: normal !important;
   display: inline-flex;
   align-items: center;
@@ -83,11 +93,12 @@ textarea {
   font-weight: 700;
 }
 
-.fas::before, .fab::before {
+html.fa-fallback .fas::before,
+html.fa-fallback .fab::before {
   display: inline-block;
 }
 
-.fa-spin {
+html.fa-fallback .fa-spin {
   animation: icon-spin 1s linear infinite;
 }
 
@@ -96,117 +107,117 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
-.fa-check::before, .fa-circle-check::before { content: '✓'; }
-.fa-times::before, .fa-x::before, .fa-trash::before, .fa-trash-alt::before, .fa-user-minus::before { content: '✕'; }
-.fa-spinner::before { content: '◌'; }
-.fa-bullhorn::before { content: '📣'; }
-.fa-heart::before, .fa-hand-holding-heart::before, .fa-heart-pulse::before { content: '♥'; }
-.fa-file-invoice-dollar::before, .fa-circle-dollar-to-slot::before, .fa-donate::before, .fa-hand-holding-dollar::before { content: '$'; }
-.fa-eye::before { content: '◉'; }
-.fa-eye-slash::before { content: '◌'; }
-.fa-envelope::before, .fa-envelope-open::before { content: '✉'; }
-.fa-edit::before, .fa-pen-to-square::before, .fa-user-edit::before { content: '✎'; }
-.fa-whatsapp::before { content: 'wa'; font-size: 0.8em; }
-.fa-search::before, .fa-search-plus::before, .fa-search-dollar::before { content: '⌕'; }
-.fa-paper-plane::before { content: '➤'; }
-.fa-image::before, .fa-photo-film::before, .fa-camera::before, .fa-camera-retro::before { content: '▣'; }
-.fa-globe::before { content: '◯'; }
-.fa-file-invoice::before, .fa-receipt::before { content: '🧾'; }
-.fa-facebook-f::before { content: 'f'; }
-.fa-twitter::before, .fa-x-twitter::before, .fa-x::before { content: 'x'; }
-.fa-arrow-right::before { content: '→'; }
-.fa-upload::before, .fa-cloud-upload-alt::before { content: '⇪'; }
-.fa-save::before { content: '↥'; }
-.fa-plus::before { content: '+'; }
-.fa-lock::before, .fa-shield-halved::before, .fa-shield-alt::before, .fa-shield-check::before, .fa-user-shield::before { content: '🔒'; }
-.fa-file-pdf::before { content: 'PDF'; font-size: 0.75em; }
-.fa-arrow-left::before { content: '←'; }
-.fa-user-friends::before, .fa-users::before, .fa-users-slash::before, .fa-users-gear::before, .fa-user-gear::before { content: 'U'; }
-.fa-phone::before, .fa-phone-alt::before { content: '☎'; }
-.fa-newspaper::before { content: '📰'; }
-.fa-map-marker-alt::before, .fa-map-location-dot::before { content: '⌖'; }
-.fa-instagram::before { content: 'ig'; font-size: 0.8em; }
-.fa-hands-helping::before, .fa-hands-holding-heart::before { content: '🤝'; }
-.fa-download::before { content: '⇩'; }
-.fa-comment-dots::before { content: '…'; }
-.fa-chart-pie::before, .fa-chart-bar::before, .fa-chart-line::before { content: '◔'; }
-.fa-bullseye::before { content: '◎'; }
-.fa-book-open::before { content: '📖'; }
-.fa-bars::before { content: '≡'; }
-.fa-wallet::before { content: 'W'; }
-.fa-vault::before { content: 'V'; }
-.fa-sliders::before { content: '☰'; }
-.fa-sitemap::before, .fa-project-diagram::before, .fa-network-wired::before { content: '⛓'; }
-.fa-power-off::before { content: '⏻'; }
-.fa-certificate::before { content: '🏅'; }
-.fa-laptop-code::before, .fa-microchip::before { content: '⌘'; }
-.fa-key::before { content: '🔑'; }
-.fa-info-circle::before { content: 'i'; }
-.fa-inbox::before { content: '📥'; }
-.fa-headset::before { content: '🎧'; }
-.fa-graduation-cap::before { content: '🎓'; }
-.fa-file-contract::before { content: '📄'; }
-.fa-exclamation-triangle::before { content: '⚠'; }
-.fa-database::before { content: 'DB'; font-size: 0.72em; }
-.fa-credit-card::before { content: '💳'; }
-.fa-child-reaching::before, .fa-child::before { content: 'C'; }
-.fa-award::before { content: '🏆'; }
-.fa-ambulance::before { content: '🚑'; }
-.fa-address-book::before { content: '☎'; }
-.fa-bell::before { content: '🔔'; }
-.fa-print::before { content: '⎙'; }
-.fa-cog::before, .fa-gear::before { content: '⚙'; }
-.fa-file::before { content: '📄'; }
-.fa-list-check::before { content: '☑'; }
-.fa-calendar::before { content: '📅'; }
-.fa-box-open::before { content: '📦'; }
-.fa-circle-dollar-to-slot::before { content: '$'; }
-.fa-rocket::before { content: '↗'; }
-.fa-school::before { content: '🏫'; }
-.fa-scale-balanced::before { content: '⚖'; }
-.fa-heart::before { content: '♥'; }
-.fa-file-invoice-dollar::before { content: '$'; }
-.fa-user::before, .fa-user-check::before, .fa-user-graduate::before { content: 'U'; }
-.fa-user-minus::before { content: 'U-'; }
-.fa-user-friends::before { content: 'UU'; }
-.fa-circle-check::before { content: '✓'; }
-.fa-bullhorn::before { content: '📣'; }
-.fa-file-invoice::before { content: '🧾'; }
-.fa-cloud-upload-alt::before { content: '⇪'; }
-.fa-donate::before { content: '$'; }
-.fa-facebook-f::before { content: 'f'; }
-.fa-youtube::before { content: '▶'; }
-.fa-x::before { content: 'x'; }
-.fa-clipboard::before { content: '⎘'; }
-.fa-crown::before { content: '♛'; }
-.fa-lightbulb::before { content: '💡'; }
-.fa-pen::before { content: '✎'; }
-.fa-phone-alt::before { content: '☎'; }
-.fa-upload::before { content: '⇪'; }
-.fa-users-slash::before { content: 'U/'; }
-.fa-users-gear::before { content: 'U⚙'; }
-.fa-user-gear::before { content: 'U⚙'; }
-.fa-user-shield::before { content: 'U🔒'; }
-.fa-user-edit::before { content: 'U✎'; }
-.fa-user-check::before { content: 'U✓'; }
-.fa-hand-holding-dollar::before { content: '$'; }
-.fa-hand-holding-heart::before { content: '♥'; }
-.fa-circle-check::before { content: '✓'; }
-.fa-circle-dollar-to-slot::before { content: '$'; }
-.fa-heart-pulse::before { content: '♥'; }
-.fa-photo-film::before { content: '▣'; }
-.fa-clipboard-list::before { content: '☑'; }
-.fa-house::before { content: '⌂'; }
-.fa-pen::before { content: '✎'; }
-.fa-building::before { content: '▣'; }
-.fa-star::before { content: '★'; }
-.fa-microphone::before { content: '♪'; }
-.fa-hands-holding-heart::before { content: '🤝'; }
-.fa-boxes-stacked::before { content: '▦'; }
-.fa-folder-open::before { content: '📂'; }
-.fa-chart-area::before { content: '◔'; }
-.fa-circle-user::before { content: 'U'; }
-.fa-right-from-bracket::before { content: '↩'; }
-.fa-arrow-up-right-from-square::before { content: '↗'; }
-.fa-circle-info::before { content: 'i'; }
-.fa-circle-xmark::before { content: '✕'; }
+html.fa-fallback .fa-check::before, html.fa-fallback .fa-circle-check::before { content: '✓'; }
+html.fa-fallback .fa-times::before, html.fa-fallback .fa-x::before, html.fa-fallback .fa-trash::before, html.fa-fallback .fa-trash-alt::before, html.fa-fallback .fa-user-minus::before { content: '✕'; }
+html.fa-fallback .fa-spinner::before { content: '◌'; }
+html.fa-fallback .fa-bullhorn::before { content: '📣'; }
+html.fa-fallback .fa-heart::before, html.fa-fallback .fa-hand-holding-heart::before, html.fa-fallback .fa-heart-pulse::before { content: '♥'; }
+html.fa-fallback .fa-file-invoice-dollar::before, html.fa-fallback .fa-circle-dollar-to-slot::before, html.fa-fallback .fa-donate::before, html.fa-fallback .fa-hand-holding-dollar::before { content: '$'; }
+html.fa-fallback .fa-eye::before { content: '◉'; }
+html.fa-fallback .fa-eye-slash::before { content: '◌'; }
+html.fa-fallback .fa-envelope::before, html.fa-fallback .fa-envelope-open::before { content: '✉'; }
+html.fa-fallback .fa-edit::before, html.fa-fallback .fa-pen-to-square::before, html.fa-fallback .fa-user-edit::before { content: '✎'; }
+html.fa-fallback .fa-whatsapp::before { content: 'wa'; font-size: 0.8em; }
+html.fa-fallback .fa-search::before, html.fa-fallback .fa-search-plus::before, html.fa-fallback .fa-search-dollar::before { content: '⌕'; }
+html.fa-fallback .fa-paper-plane::before { content: '➤'; }
+html.fa-fallback .fa-image::before, html.fa-fallback .fa-photo-film::before, html.fa-fallback .fa-camera::before, html.fa-fallback .fa-camera-retro::before { content: '▣'; }
+html.fa-fallback .fa-globe::before { content: '◯'; }
+html.fa-fallback .fa-file-invoice::before, html.fa-fallback .fa-receipt::before { content: '🧾'; }
+html.fa-fallback .fa-facebook-f::before { content: 'f'; }
+html.fa-fallback .fa-twitter::before, html.fa-fallback .fa-x-twitter::before, html.fa-fallback .fa-x::before { content: 'x'; }
+html.fa-fallback .fa-arrow-right::before { content: '→'; }
+html.fa-fallback .fa-upload::before, html.fa-fallback .fa-cloud-upload-alt::before { content: '⇪'; }
+html.fa-fallback .fa-save::before { content: '↥'; }
+html.fa-fallback .fa-plus::before { content: '+'; }
+html.fa-fallback .fa-lock::before, html.fa-fallback .fa-shield-halved::before, html.fa-fallback .fa-shield-alt::before, html.fa-fallback .fa-shield-check::before, html.fa-fallback .fa-user-shield::before { content: '🔒'; }
+html.fa-fallback .fa-file-pdf::before { content: 'PDF'; font-size: 0.75em; }
+html.fa-fallback .fa-arrow-left::before { content: '←'; }
+html.fa-fallback .fa-user-friends::before, html.fa-fallback .fa-users::before, html.fa-fallback .fa-users-slash::before, html.fa-fallback .fa-users-gear::before, html.fa-fallback .fa-user-gear::before { content: 'U'; }
+html.fa-fallback .fa-phone::before, html.fa-fallback .fa-phone-alt::before { content: '☎'; }
+html.fa-fallback .fa-newspaper::before { content: '📰'; }
+html.fa-fallback .fa-map-marker-alt::before, html.fa-fallback .fa-map-location-dot::before { content: '⌖'; }
+html.fa-fallback .fa-instagram::before { content: 'ig'; font-size: 0.8em; }
+html.fa-fallback .fa-hands-helping::before, html.fa-fallback .fa-hands-holding-heart::before { content: '🤝'; }
+html.fa-fallback .fa-download::before { content: '⇩'; }
+html.fa-fallback .fa-comment-dots::before { content: '…'; }
+html.fa-fallback .fa-chart-pie::before, html.fa-fallback .fa-chart-bar::before, html.fa-fallback .fa-chart-line::before { content: '◔'; }
+html.fa-fallback .fa-bullseye::before { content: '◎'; }
+html.fa-fallback .fa-book-open::before { content: '📖'; }
+html.fa-fallback .fa-bars::before { content: '≡'; }
+html.fa-fallback .fa-wallet::before { content: 'W'; }
+html.fa-fallback .fa-vault::before { content: 'V'; }
+html.fa-fallback .fa-sliders::before { content: '☰'; }
+html.fa-fallback .fa-sitemap::before, html.fa-fallback .fa-project-diagram::before, html.fa-fallback .fa-network-wired::before { content: '⛓'; }
+html.fa-fallback .fa-power-off::before { content: '⏻'; }
+html.fa-fallback .fa-certificate::before { content: '🏅'; }
+html.fa-fallback .fa-laptop-code::before, html.fa-fallback .fa-microchip::before { content: '⌘'; }
+html.fa-fallback .fa-key::before { content: '🔑'; }
+html.fa-fallback .fa-info-circle::before { content: 'i'; }
+html.fa-fallback .fa-inbox::before { content: '📥'; }
+html.fa-fallback .fa-headset::before { content: '🎧'; }
+html.fa-fallback .fa-graduation-cap::before { content: '🎓'; }
+html.fa-fallback .fa-file-contract::before { content: '📄'; }
+html.fa-fallback .fa-exclamation-triangle::before { content: '⚠'; }
+html.fa-fallback .fa-database::before { content: 'DB'; font-size: 0.72em; }
+html.fa-fallback .fa-credit-card::before { content: '💳'; }
+html.fa-fallback .fa-child-reaching::before, html.fa-fallback .fa-child::before { content: 'C'; }
+html.fa-fallback .fa-award::before { content: '🏆'; }
+html.fa-fallback .fa-ambulance::before { content: '🚑'; }
+html.fa-fallback .fa-address-book::before { content: '☎'; }
+html.fa-fallback .fa-bell::before { content: '🔔'; }
+html.fa-fallback .fa-print::before { content: '⎙'; }
+html.fa-fallback .fa-cog::before, html.fa-fallback .fa-gear::before { content: '⚙'; }
+html.fa-fallback .fa-file::before { content: '📄'; }
+html.fa-fallback .fa-list-check::before { content: '☑'; }
+html.fa-fallback .fa-calendar::before { content: '📅'; }
+html.fa-fallback .fa-box-open::before { content: '📦'; }
+html.fa-fallback .fa-circle-dollar-to-slot::before { content: '$'; }
+html.fa-fallback .fa-rocket::before { content: '↗'; }
+html.fa-fallback .fa-school::before { content: '🏫'; }
+html.fa-fallback .fa-scale-balanced::before { content: '⚖'; }
+html.fa-fallback .fa-heart::before { content: '♥'; }
+html.fa-fallback .fa-file-invoice-dollar::before { content: '$'; }
+html.fa-fallback .fa-user::before, html.fa-fallback .fa-user-check::before, html.fa-fallback .fa-user-graduate::before { content: 'U'; }
+html.fa-fallback .fa-user-minus::before { content: 'U-'; }
+html.fa-fallback .fa-user-friends::before { content: 'UU'; }
+html.fa-fallback .fa-circle-check::before { content: '✓'; }
+html.fa-fallback .fa-bullhorn::before { content: '📣'; }
+html.fa-fallback .fa-file-invoice::before { content: '🧾'; }
+html.fa-fallback .fa-cloud-upload-alt::before { content: '⇪'; }
+html.fa-fallback .fa-donate::before { content: '$'; }
+html.fa-fallback .fa-facebook-f::before { content: 'f'; }
+html.fa-fallback .fa-youtube::before { content: '▶'; }
+html.fa-fallback .fa-x::before { content: 'x'; }
+html.fa-fallback .fa-clipboard::before { content: '⎘'; }
+html.fa-fallback .fa-crown::before { content: '♛'; }
+html.fa-fallback .fa-lightbulb::before { content: '💡'; }
+html.fa-fallback .fa-pen::before { content: '✎'; }
+html.fa-fallback .fa-phone-alt::before { content: '☎'; }
+html.fa-fallback .fa-upload::before { content: '⇪'; }
+html.fa-fallback .fa-users-slash::before { content: 'U/'; }
+html.fa-fallback .fa-users-gear::before { content: 'U⚙'; }
+html.fa-fallback .fa-user-gear::before { content: 'U⚙'; }
+html.fa-fallback .fa-user-shield::before { content: 'U🔒'; }
+html.fa-fallback .fa-user-edit::before { content: 'U✎'; }
+html.fa-fallback .fa-user-check::before { content: 'U✓'; }
+html.fa-fallback .fa-hand-holding-dollar::before { content: '$'; }
+html.fa-fallback .fa-hand-holding-heart::before { content: '♥'; }
+html.fa-fallback .fa-circle-check::before { content: '✓'; }
+html.fa-fallback .fa-circle-dollar-to-slot::before { content: '$'; }
+html.fa-fallback .fa-heart-pulse::before { content: '♥'; }
+html.fa-fallback .fa-photo-film::before { content: '▣'; }
+html.fa-fallback .fa-clipboard-list::before { content: '☑'; }
+html.fa-fallback .fa-house::before { content: '⌂'; }
+html.fa-fallback .fa-pen::before { content: '✎'; }
+html.fa-fallback .fa-building::before { content: '▣'; }
+html.fa-fallback .fa-star::before { content: '★'; }
+html.fa-fallback .fa-microphone::before { content: '♪'; }
+html.fa-fallback .fa-hands-holding-heart::before { content: '🤝'; }
+html.fa-fallback .fa-boxes-stacked::before { content: '▦'; }
+html.fa-fallback .fa-folder-open::before { content: '📂'; }
+html.fa-fallback .fa-chart-area::before { content: '◔'; }
+html.fa-fallback .fa-circle-user::before { content: 'U'; }
+html.fa-fallback .fa-right-from-bracket::before { content: '↩'; }
+html.fa-fallback .fa-arrow-up-right-from-square::before { content: '↗'; }
+html.fa-fallback .fa-circle-info::before { content: 'i'; }
+html.fa-fallback .fa-circle-xmark::before { content: '✕'; }

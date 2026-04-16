@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="fa-fallback">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +7,32 @@
   <meta name="description" content="Naanghirisa Organisation portal for public information, donations, campaigns, volunteer activity, and internal administration." />
   <meta property="og:title" content="Naanghirisa Organisation Portal" />
   <meta property="og:description" content="Naanghirisa Organisation portal for public information, donations, campaigns, volunteer activity, and internal administration." />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-      <style>
-    body {
-      font-family: 'Inter', sans-serif;
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <meta name="theme-color" content="#f8fafc" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+    onload="document.documentElement.classList.remove('fa-fallback')"
+    onerror="document.documentElement.classList.add('fa-fallback')"
+  >
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    referrerpolicy="no-referrer"
+    onload="document.documentElement.classList.remove('fa-fallback')"
+    onerror="document.documentElement.classList.add('fa-fallback')"
+  >
+  <script>
+    if (!document.documentElement.classList.contains('fa-fallback')) {
+      document.documentElement.classList.add('fa-fallback');
     }
-
-    .glass-effect {
-      backdrop-filter: blur(8px);
-      background: rgba(255, 255, 255, 0.8);
-    }
-  </style>
-  <link rel="stylesheet" href="/index.css">
+  </script>
 </head>
 
 <body class="bg-slate-50 text-slate-900">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
-
 </html>

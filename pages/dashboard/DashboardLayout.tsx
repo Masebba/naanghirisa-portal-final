@@ -49,6 +49,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
     setNotifications(getNotifications(user.id));
   };
 
+  const handleMarkAllRead = () => {
+    notifications.filter(n => !n.read).forEach(n => markNotificationRead(n.id));
+    setNotifications(getNotifications(user.id));
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const menuItems = [
@@ -75,8 +80,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
     <div className="min-h-screen bg-slate-50 flex font-inter overflow-x-hidden">
       <PageMeta title={`Dashboard | ${filteredMenu.find(m => m.path === location.pathname)?.name || 'Portal'}`} description="Naanghirisa admin dashboard for managing content, campaigns, donations, and user access." />
       {/* Sidebar - Desktop and Mobile Drawer */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#FFF7F1] text-slate-500 transition-transform duration-300 z-50 flex flex-col border-r border-slate-300 shadow-lg ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="py-2 w-auto h-16 flex flex-col items-center border-b border-orange-400">
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-white text-slate-600 transition-transform duration-300 z-50 flex flex-col border-r border-slate-200 shadow-lg ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="py-2 w-auto h-16 flex flex-col items-center border-b border-slate-200 bg-white">
           {/* Logo*/}
           <Link to="/" className="flex items-center">
             <img src={logo} alt="Naanghirisa" className="h-10 md:h-16 w-auto" />
@@ -90,9 +95,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-2 rounded-lg px-2 py-2 transition-all group ${isActive ? 'bg-orange-400 text-white shadow-lg' : 'hover:bg-white/5 hover:text-orange-400'}`}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all group ${isActive ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-slate-50 hover:text-slate-900'}`}
               >
-                <i className={`fas ${item.icon} w-5 text-sm ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-orange-400'}`}></i>
+                <i className={`fas ${item.icon} w-5 text-sm ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'}`}></i>
                 <span className="ml-3 text-[10px] font-black uppercase tracking-widest">{item.name}</span>
               </Link>
             );
@@ -113,31 +118,52 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
 
       {/* Main Content Area */}
       <div className="flex-grow transition-all duration-300 flex flex-col min-w-0 lg:ml-60">
-        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-orange-400/50 sticky top-0 z-30 px-4 md:px-6 flex justify-between items-center">
+        <header className="h-16 bg-white/95 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-30 px-4 md:px-6 flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600"><i className="fas fa-bars text-xl"></i></button>
-            <h2 className="hidden sm:block text-xl font-black uppercase tracking-tighter truncate">{filteredMenu.find(m => m.path === location.pathname)?.name || 'Portal'}</h2>
+            <div className="hidden sm:block">
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Portal</p>
+              <h2 className="text-xl font-black uppercase tracking-tight truncate">{filteredMenu.find(m => m.path === location.pathname)?.name || 'Dashboard'}</h2>
+            </div>
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
             <div className="relative" ref={notifRef}>
-              <button onClick={() => setShowNotifs(!showNotifs)} className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 relative">
+              <button onClick={() => setShowNotifs(!showNotifs)} className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 relative border border-slate-200 hover:bg-slate-100 transition-colors">
                 <i className="fas fa-bell"></i>
                 {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{unreadCount}</span>}
               </button>
               {showNotifs && (
-                <div className="absolute right-0 mt-4 w-72 md:w-80 bg-white rounded-lg shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
-                  <div className="p-5 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest">Alerts</h4>
-                    <span className="text-[9px] font-bold text-orange-600">{unreadCount} New</span>
+                <div className="absolute right-0 mt-4 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="p-5 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center gap-3">
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest">Notifications</h4>
+                      <p className="text-[9px] text-slate-400 font-semibold mt-1">Updates for your portal account</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[9px] font-bold text-slate-500">{unreadCount} unread</span>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead} className="text-[9px] font-black uppercase tracking-widest text-slate-900 hover:text-orange-600">Mark all read</button>
+                      )}
+                    </div>
                   </div>
-                  <div className="max-h-[300px] overflow-y-auto">
+                  <div className="max-h-[320px] overflow-y-auto">
                     {notifications.length > 0 ? notifications.map(n => (
-                      <div key={n.id} onClick={() => handleMarkRead(n.id)} className={`p-5 border-b border-slate-50 cursor-pointer hover:bg-slate-50 ${!n.read ? 'bg-orange-50/20' : ''}`}>
-                        <p className="text-xs font-black text-slate-900 uppercase">{n.title}</p>
-                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">{n.message}</p>
+                      <button key={n.id} type="button" onClick={() => handleMarkRead(n.id)} className={`w-full text-left p-5 border-b border-slate-50 cursor-pointer transition-colors hover:bg-slate-50 ${!n.read ? 'bg-orange-50/30' : ''}`}>
+                        <div className="flex items-start gap-3">
+                          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${n.read ? 'bg-slate-300' : 'bg-orange-500'}`}></span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-black text-slate-900 uppercase">{n.title}</p>
+                            <p className="text-[10px] text-slate-500 mt-1 leading-relaxed line-clamp-2">{n.message}</p>
+                          </div>
+                        </div>
+                      </button>
+                    )) : (
+                      <div className="py-12 text-center text-slate-400">
+                        <i className="fas fa-bell text-2xl mb-3 block text-slate-300"></i>
+                        <p className="text-xs font-semibold">No notifications yet</p>
                       </div>
-                    )) : <div className="py-10 text-center text-slate-300 italic text-xs">No alerts</div>}
+                    )}
                   </div>
                 </div>
               )}
@@ -159,7 +185,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
           {children}
         </div>
 
-        <footer className="px-10 py-6 border-t border-slate-200 flex justify-center text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
+        <footer className="px-10 py-6 border-t border-slate-200 flex justify-center text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 bg-white">
           &copy; {new Date().getFullYear()} Naanghirisa Organisation
         </footer>
       </div>
